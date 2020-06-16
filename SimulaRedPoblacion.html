@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html> 
+<head>
+  <title>Simulación de Población y Contagio entre Personas - Twitter: @litomd</title> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+  <meta name="description" content="A network model for simulating infectious disease contagion through connections among people.">
+  <meta name="description" content="Un modelo de redes que simula contagio de enfermedades infecciosas por conexiones entre la gente.">
+  <meta name="description" content="All code -Javascript, CSS, HTML- in a single page. Uses Processing.js.">
+  <meta name="description" content="Todo el código -Javascript, CSS, HTML- en la misma página. Usa Processing.js">
+  <meta name="description" content="For comments, suggestions and questions please contact author https://twitter.com/litomd">
+  <meta name="description" content="Para comentarios, sugerencias y preguntas por favor contacte al autor en https://twitter.com/litomd">
+  <meta property="og:title" content="Simulating infectious disease contagion in a network." />
+  <meta property="og:type" content="website" />
+  <meta property="og:description" content="A network model for simulating infectious disease contagion through connections among people." />
+  <meta property="og:image" content="http://litomd.com/simred/simulared20Abr2020.jpg" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Simulating infectious disease contagion in a network." />
+  <meta name="twitter:description" content="A network model for simulating infectious disease contagion through connections among people." />
+  <meta name="twitter:image" content="http://litomd.com/simred/simulared20Abr2020.jpg" />
+  <meta name="twitter:site" content="@litomd" />
+  <meta name="twitter:creator" content="@litomd" />
+</head>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+  body, html{
+    height:100%;
+    border:0px;
+    margin:0px;
+    padding:0px;
+    background-color:black;
+  }
+
+  /* Tooltip container */
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+  /* Tooltip text */
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 130px;
+    background-color: black;
+    border: 1px solid powderblue;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.75em;
+    color: aliceblue;
+    opacity: 0.9;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    bottom: 75%;
+    left: 75%;
+
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+  }
+  /* Show the tooltip text when you mouse over the tooltip container */
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+  }
+
+  .row::after {
+    content: "";
+    clear: both;
+    display: table;
+  }
+  [class*="col-"] {
+    float: left;
+    padding: 10px;
+    border: 1px solid gray;
+  }
+
+  @media only screen and (max-width: 644px) {
+    /* For mobile phones: */
+    [class*="col-"] { width: 100%; }
+    label, table, a { font-size: 0.75em; }
+  }
+  
+  @media only screen and (min-width: 644px) {
+    /* For tablets: */
+    .col-s-1 {width: 8.33%;}
+    .col-s-2 {width: 16.66%;}
+    .col-s-3 {width: 25%;}
+    .col-s-4 {width: 33.33%;}
+    .col-s-5 {width: 41.66%;}
+    .col-s-6 {width: 50%;}
+    .col-s-7 {width: 58.33%;}
+    .col-s-8 {width: 66.66%;}
+    .col-s-9 {width: 75%;}
+    .col-s-10 {width: 83.33%;}
+    .col-s-11 {width: 91.66%;}
+    .col-s-12 {width: 100%;}
+    label, table, a { font-size: 0.625em; }
+  }
+
+  @media only screen and (min-width: 1024px) {
+    /* For desktop: */
+    .col-1 {width: 8.33%;}
+    .col-2 {width: 16.66%;}
+    .col-3 {width: 25%;}
+    .col-4 {width: 33.33%;}
+    .col-5 {width: 41.66%;}
+    .col-6 {width: 50%;}
+    .col-7 {width: 58.33%;}
+    .col-8 {width: 66.66%;}
+    .col-9 {width: 75%;}
+    .col-10 {width: 83.33%;}
+    .col-11 {width: 91.66%;}
+    .col-12 {width: 100%;}
+    label, table, a { font-size: 0.75em; }
+  }
+  
+  .subrow {
+    background-color: lavender;    
+  }
+  
+  .params, .results {
+    width: 50%;
+    float: left;
+    padding: 10px;
+  }
+  
+  h1, h2, h3, h4 {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: aliceblue;
+    color: royalblue;
+    padding: 2px;
+    text-align: center;
+  }
+  
+  h1 {
+    font-size: 0.875em;
+  }
+  
+  label, table {
+    font-family: Arial, Helvetica, sans-serif;
+    color: black;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+  
+  .lblR {
+    display: inline-block; 
+    width: 50%; 
+    text-align: right;
+  }
+  
+  .lblC {
+    display: inline-block; 
+    width: 100%; 
+    text-align: center;
+  }
+  
+  a {
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  
+  th.out {
+    background-image: linear-gradient(to right, lightsalmon, lightyellow);
+  }
+  
+  th.in {
+    background-image: linear-gradient(to right, powderblue, aliceblue);
+  }
+  
+  tr:nth-child(even) {
+    background-color: lightblue;
+  }
+  
+  td {
+    text-align: right;
+    font-weight: bold;
+  }
+  
+  td:first-child {
+    text-align: left;
+    font-weight: normal;
+  }
+  
+  td:nth-last-child(1), td:nth-last-child(2) {
+    font-weight: normal;
+  }
+  
+  input[type=number], select {
+    width: 100%;
+    padding: 2px;
+    margin: 0px 1px 1px 1px;
+    font-family: "Lucida Console", Courier, monospace;
+    font-size: 0.75em;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    box-sizing: border-box;
+    background-color: dimgray;
+    color: azure;
+    text-align: right;
+  }
+  
+  select {
+  }
+  
+  input[type=number] {
+    font-weight: bold;
+  }
+  
+  input[type=number]:focus, select:focus {
+    background-color: black;
+  }
+  
+  input[type=number].halfL {
+    width: 48%;
+    float: left;
+  }
+  
+  input[type=number].halfR {
+    width: 48%;
+    float: right;
+  }
+  
+  input[type=checkbox] {
+    vertical-align: bottom;
+  }
+
+  /* Chrome, Safari, Edge, Opera */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+  
+  button {
+    padding: 10px 12px;
+    margin: 8px 0px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.875em;
+    height: 34px;
+    font-weight: bold;
+    color: steelblue;
+    background-color: powderblue;
+  }
+  button:hover {
+    color: aliceblue;
+    background-color: cornflowerblue;
+  }
+  
+  p.sep {
+    line-height: 0px;
+    border: 0px;
+    padding: 2px;
+    margin: 0px;
+  }
+</style>
+<body>
+<div class="row" style="height: 100%">
+  <div class="col-4 col-s-5">
+  <h1>Network contagion simulation</h1>
+  <form>
+  <div class="row subrow" id="paramsdiv">
+    <div class="params">
+      <p></p>
+      <label class="lblR" for="maxTO">Nodes</label><input type="number" class="halfR" id="maxTO" value="2500">
+      <label for="minO">Min. <b>&swarr; &searr;</b> Max. offspring</label><br>
+      <input type="number" class="halfL" id="minO" value="-5">
+      <input type="number" class="halfR" id="maxO" value="7">
+      <label for="iniO">Cent.Dg. <b>&swarr; &searr;</b> Min.Cent.Dg.</label><br>
+      <input type="number" class="halfL" id="iniO" value="6">
+      <input type="number" class="halfR" id="degC" value="3">
+      <label for="radS">Edge size <b>&swarr; &searr;</b> Ang. Dist.</label><br>
+      <input type="number" class="halfL" id="radS" value="20">
+      <input type="number" class="halfR" id="angD" value="10">
+      <label for="FPS">FPS Epid. <b>&swarr; &searr;</b> P. Redraw</label><br>
+      <input type="number" class="halfL" id="FPS" value="100">
+      <input type="number" class="halfR" id="pDrw" value="1">
+      <label for="stop">Sim. Runs <b>&swarr; &searr;</b> Exec.</label><br>
+      <input type="number" class="halfL" id="stop" value="100">
+      <input type="checkbox" id="pcd" checked><label for="pcd">Paced</label><br>
+      <label for="stop">Stop days <b>&swarr; &searr;</b> Stop cases</label><br>
+      <input type="number" class="halfL" id="NDays" value="0">
+      <input type="number" class="halfR" id="NCes" value="0">
+      <br><label for="infM">Infection model</label><select id="infM" value="0">
+        <option value="0">Aleatory, any node can start</option>
+        <option value="1">Centralized, nodes at center start</option>
+        <option value="2">Central, nodes with high degree start</option>
+      </select>
+      <p class="sep"></p>
+      <label class="lblR" for="infN">Strt.Cases</label><input type="number" class="halfR" id="infN" value="5">
+      <!-- label for=""></label><input type="number" id="" value="" -->
+    </div>
+    <div class="params">
+      <label for="infP">Prob.: Contag. <b>&swarr; &searr;</b> Asympt.</label><br>
+      <input type="number" class="halfL" id="infP" value="0.15">
+      <input type="number" class="halfR" id="aSymP" value="0.75">
+      <label for="sevP">Prob.: Severe <b>&swarr; &searr;</b> Die</label><br>
+      <input type="number" class="halfL" id="sevP" value="0.2">
+      <input type="number" class="halfR" id="deaP" value="0.8">
+      <label for="daysTC">Days to: Cure <b>&swarr; &searr;</b> Sympt.</label><br>
+      <input type="number" class="halfL" id="daysTC" value="35">
+      <input type="number" class="halfR" id="daysTS" value="14">
+      <label for="daysTA">Days to: Severe <b>&swarr; &searr;</b> Die</label><br>
+      <input type="number" class="halfL" id="daysTA" value="5">
+      <input type="number" class="halfR" id="daysTD" value="10">
+      <label for="quM">Quarantine model</label><select id="quM" value="0">
+        <option value="0">None, no quarantine</option>
+        <option value="1">Diagnosed only</option>
+        <option value="2">Diagnosed and direct connections</option>
+      </select>
+      <p class="sep"></p>
+      <label class="lblR" for="quD">Qu. days</label><input type="number" class="halfR" id="quD" value="14"><br>
+      <label for="tstM">Testing model</label><select id="tstM" value="0">
+        <option value="0">None, no testing</option>
+        <option value="1">For diagnosis (severe & quarantined) only</option>
+        <option value="2">Random among all nodes & diagnosis</option>
+        <option value="3">Random among central nodes & diagnosis</option>
+      </select>
+      <label for="tstMx">Test: per day <b>&swarr; &searr;</b> available</label><br>
+      <input type="number" class="halfL" id="tstMx" value="5">
+      <input type="number" class="halfR" id="tstAv" value="500">
+      <br><input type="checkbox" id="tstW" checked><label for="tstW">Wait 1st Sev. case</label>
+      <!-- label for=""></label><input type="number" id="" value="" -->
+    </div>
+  </div>
+  <div class="row subrow" id="shareurl" style="display:none; border:1px solid black;">
+    <div style="margin-left:2.5%; margin-right:2.5%; width: 95%;">
+    <div style="text-align: right; width: 100%; cursor: pointer;" onclick="closeURLBox()">&#9746;</div>
+    <label for="taURL">Share URL</label>
+    <textarea id="taURL" rows="3" style="width: 100%;"></textarea>
+    <a id="aURL" href="">Open link &nearhk;</a><br>&nbsp;
+    </div>
+  </div>
+  <div id="paramsdummy" class="subrow" style="display:none;">&nbsp;&nbsp;&lrhard;&nbsp;&nbsp;&lrhard;&nbsp;&nbsp;&lrhard;</div>
+  <div class="row" style="text-align: center;">
+  <div class="tooltip" style="width:12%">
+    <button id="Collapse" onclick="collapseParams(event)" style="width:100%">&uuarr;</button>
+    <span class="tooltiptext">Collapse Param. box</span>
+  </div>
+    <button id="Restart" onclick="reassingParams(event, true)" style="width:40%" accesskey="A"><u>A</u>pply + Restart</button>
+  <button id="Restart" onclick="reassingParams(event, false)" style="width:30%" accesskey="J"><u>J</u>ust Apply</button>
+  <div class="tooltip" style="width:12%">
+    <button id="Share" onclick="shareParams(event)" style="width:100%">&nearhk;</button>
+    <span class="tooltiptext">Share simulation URL</span>
+  </div>
+  </div>
+  </form>
+  <h1>Results</h1>
+  <div class="row subrow">
+    <div class="results">
+      <table id="TabResults">
+        <tr><th>Item</th><th>Now</th><th>%</th><th>Max</th><th>Day</th><th>&nbsp;&nbsp;</th><th>Past</th><th>%</th></tr>
+        <tr><td>Duration (days)</td><td>-</td><td>-</td><td>-</td><td id="infD">0</td><td></td><td id="~infD">-</td><td>-</td></tr>
+        <tr><td>Network (nodes)</td><td id="_pLen">0</td><td>100</td><td id="diam">0</td><td>-</td><td></td><td id="~_pLen">-</td><td>-</td></tr>
+        <tr><td>Infected</td><td id="infC">0</td><td id="_%infC">0</td><td>-</td><td>-</td><td></td><td id="~infC">-</td><td id="~_%infC">-</td></tr>
+        <tr><td>Active</td><td id="_infAC">0</td><td id="_%infAC">0</td><td id="_^infAC">0</td><td id="_dayMA">0</td><td></td><td id="~_^infAC">-</td><td id="~_dayMA">-</td></tr>
+        <tr><td>Tests</td><td id="tstRe">0</td><td id="_%tstRe">0</td><td id="tstAv">0</td><td>1</td><td></td><td>-</td><td>-</td></tr>
+        <tr><td>Quarantined</td><td id="quN">0</td><td id="_%quN">0</td><td id="_^quN">-</td><td id="_dayMQ">0</td><td></td><td id="~_^quN">-</td><td id="~_dayMQ">-</td></tr>
+        <tr><td>Recovered</td><td id="infR">0</td><td id="_%infR">0</td><td>-</td><td>-</td><td></td><td id="~infR">-</td><td id="~_%infR">-</td></tr>
+        <tr><td>Fatalities</td><td id="infF">0</td><td id="_%infF">0</td><td>-</td><td>-</td><td></td><td id="~infF">-</td><td id="~_%infF">-</td></tr>
+        <tr><td>With symptoms</td><td id="_infSS">0</td><td id="_%infSS">0</td><td>-</td><td>-</td><td></td><td>-</td><td>-</td></tr>
+        <tr><td>Severe Symp.</td><td id="infS">0</td><td id="_%infS">0</td><td id="_^infS">0</td><td id="_dayMS">0</td><td></td><td id="~_^infS">-</td><td id="~_dayMS">-</td></tr>
+        <tr><td>Median R0</td><td colspan="4" id="R0">0</td><td></td><td colspan="2" id="~R0">-</td></tr>
+        <tr><td>Central nodes</td><td id="numC">0</td><td id="_%numC">0</td><td id="mDeg">0</td><td>-</td><td></td><td id="~numC">-</td><td id="~_%numC">-</td></tr>
+      </table>
+    </div>
+  </div>
+  </div>
+  <div class="col-8 col-s-7" style="height:100%;">
+  <canvas id="simulationcanvas"></canvas> 
+  </div>
+</div>
+<script>
+  // Parameters = 0, Output = 1
+  const ths = [
+    ["No.","Simulation instance number","",1],
+    ["Nodes","Number of nodes in network","pStg.points.length",0],
+    ["MinO","Minimum offspring generated for each node","pStg.minO",0],
+    ["MaxO","Maximum offspring generated for each node","pStg.maxO",0],
+    ["Diam","Diameter of network, max distance between nodes","pStg.diam",1],
+    ["NumC","Number of nodes with degree greater than CDeg","pStg.numC",1],
+    ["CDeg","Degree of node at the center, set by user","pStg.iniO",0],
+    ["MinCD","Minimum degree of central node","pStg.degC",0],
+    ["NDays","Number of days to run simulation","pStg.NDays",0],
+    ["NCes","Stop simulation after nth contagion case","pStg.NCes",0],
+    ["InfM","Infection model: 0-Aleatory, 1-Aleatory at the center, 2-Aleatory among central nodes","pStg.infM",0],
+    ["StrtC","Number of cases to start epidemic","pStg.infN",0],
+    ["InfP","Probability of infection on each interaction link","pStg.infP",0],
+    ["ASymP","Probability of being asymptomatic if infected","pStg.aSymP",0],
+    ["SevP","Probability of severe symptoms if not asymptomatic","pStg.sevP",0],
+    ["DeaP","Probability of death given severe symptoms","pStg.deaP",0],
+    ["DysTC","Maximum days to cure if asymptomatic","pStg.daysTC",0],
+    ["DysTS","Maximum days to start symptoms","pStg.daysTS",0],
+    ["DysTA","Maximum days to severe acute symptoms","pStg.daysTA",0],
+    ["DysTD","Maximum days to die if fatal case","pStg.daysTD",0],
+    ["QuM","Quarantine model: 0-None, 1-Diagnosed only, 2-Diagnosed and direct connections","pStg.quM",0],
+    ["QuD","Days to apply for quarantine","pStg.quD",0],
+    ["QuMx","Maximum number of nodes quarantined during epidemic","document.getElementById('_^quN').innerHTML",1],
+    ["QuT","Number of nodes quarantined during execution","pStg.quT",1],
+    ["TstM","Testing model: 0-None, 1-For diagnosis only, 2-Random among all nodes, 3-Random among central nodes","pStg.tstM",0],
+    ["TstAv","Test kits available","pStg.tstAv",0],
+    ["TstMx","Maximum number of test kits for a day","pStg.tstMx",0],
+    ["TstW","Wait for first severe case to start testing","pStg.tstW ? 1 : 0",0],
+    ["TstRe","Test kits remaining","pStg.tstRe",1],
+    ["InfD","Days since start of infection","pStg.infD",1],
+    ["InfC","Infection cases","pStg.infC",1],
+    ["InfF","Infection fatalities","pStg.infF",1],
+    ["InfR","Infection Recoveries","pStg.infR",1],
+    ["InfAM","Maximum number of severe symptoms cases observed","document.getElementById('_^infS').innerHTML",1],
+    ["InfAD","Day of maximum number of cases with severe symptoms","document.getElementById('_dayMS').innerHTML",1],
+    ["InfAC","Maximum number of active cases observed","document.getElementById('_^infAC').innerHTML",1],
+    ["InfACD","Day of maximum number of active cases","document.getElementById('_dayMA').innerHTML",1],
+    ["R0","Median of R0 observed","pStg.R0",1],
+    ["R0q1","First quartile of R0 observed","pStg.R0q1",1],
+    ["R0q3","Third quartile of R0 observed","pStg.R0q3",1],
+    // ["Drty","Data dirty if any parameter changed during execution","pStg.drty ? 1 : 0"], // Not useful
+    ["OffSp","List of offspring number for each node starting at root","pStg.globalO.toString()",1]
+  ];
+</script>
+<div class="row">
+  <div class="col-12 col-s-12">
+    <div class="subrow">
+    <table id="Stats" style="display: none;">
+<!--      <tr><td>&nbsp;</td><th class="in">Input&#8612;</th><td>Input parameter</td><td>&nbsp;</td><th class="out">Output&#8614;</th><td>Output result</td></tr> -->
+      <tr><th>Statistic</th>
+      <script>
+        function statTblTxt() {
+          var resu = "", tmpSt = "";
+          for (var i=1; i<ths.length-1; i++) {
+            if (ths[i][3]===1) {
+              resu += "<th abbr='" + ths[i][1] + "' class='out'>" + ths[i][0] + "</th>";
+              tmpSt += "<td>-</td>";
+            }
+          }
+          resu += "</tr>" + 
+            "<tr><th>Mean</th>"+tmpSt + "</tr>" +
+            "<tr><th>St.Dev.</th>"+tmpSt + "</tr>" +
+            "<tr><th>Coe.Va.</th>"+tmpSt + "</tr>";
+          return resu;
+        }
+        document.write(statTblTxt());
+      </script>
+      </tr>
+    </table>
+    <table id="Historic">
+      <tr>
+        <script>
+          for (var i=0; i<ths.length-1; i++) {
+            document.write("<th abbr='" + ths[i][1] + "' class='" + (ths[i][3]===0?"in":"out") + "'>" + ths[i][0] + "</th>");
+          }
+          document.write("<th style='text-align: left;' abbr='" + ths[ths.length-1][1] + "'>" + ths[ths.length-1][0] + "</th>");
+          document.write("<tr><td>&nbsp;</td></tr>");
+        </script>
+      </tr>
+    </table>
+    </div>
+  </div>
+</div>
+</body>
+ 
+<!-- Include the processing.js library -->
+<script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
+<script>
+const canvEl = document.getElementById("simulationcanvas");
+const inpEles = document.getElementsByTagName("input");
+const selEles = document.getElementsByTagName("select");
+  
+const v2Pi = 2*Math.acos(-1); // Equivalent to 2*pi
+        
+var pStg = { // Global variables, parameters storage
+  phase : 0, // Program phase:
+  // 0: generate population
+  // 1: show links
+  // 2: show concentric levels
+  // 3: show distances as concentric level
+  // 4: remove concentric circles
+  // 5: build tree-like network
+  points : null, lpnts : null, diam : 0,
+  // points: array of points in screen
+  // each point is an individual element of analysis
+  // lpoints: points for explicative legend
+  // diam: network diameter
+  minO : -5, maxO : 7, iniO : 6, runTO : 0, maxTO : 2500,
+  // maxO : maximun new offspring for each parent
+  // minO : minimun offspring can be negative to shift media,
+  //        actual negatives become zero
+  // iniO : offspring of base node (initial)
+  // runTO : running total of global offspring
+  // maxTO : maximun number of global offspring
+  radS : 20, angD : 10*v2Pi/360, FPS : 100, pDrw : 0.25,
+  // radS : size of radio for spacing points
+  // angD : angular distance between offspring in final network    
+  // FPS : Frames per second for infection phase
+  // pDrw : Percentage of times screen is redrawn
+  degC : 3, numC : 0, mDeg : 0,
+  // degC: degree of node to be labeled "central"
+  // numC: number of nodes with degree >= degC
+  // mDeg: maximum degree observed in a node
+  infP : 0.15, aSymP : 0.75, sevP : 0.2, deaP : 0.8,
+  // infP : probability of infection transmission on interaction
+  // aSymP : probability of being asymptomatic if infected (conditional)
+  // sevP : probability of severe symptoms if infected (conditional)
+  // deaP : probability of dying if symptoms are severe (conditional)
+  daysTC : 35, daysTS : 14, daysTA : 5, daysTD : 10,
+  // daysTC : max days to cure
+  // daysTS : max days to show symptoms after infection
+  // daysTA : max days to severe-acute symptoms after showing symptoms
+  // daysTD : max days to die or recover after severe-acute symptoms show
+  infM: 0, // infM: infection mode for initial cases
+  // 0: aleatory, n nodes at random start pandemic
+  // 1: centralized, n nodes at network center start pandemic
+  // 2: central, n highly connected nodes start pandemic
+  infN: 5, infD: 0, infC: 0, infF: 0, infR: 0, infA: 0, infS: 0,
+  // infN : number of cases at the beginning of pandemic
+  // infD : infection days
+  // infC : infection cases
+  // infF : infection fatalities
+  // infR : infection recoveries
+  // infA : infection asymptomatic cases
+  // infS : infection severe cases
+  // Calculated stats :
+  //   Infection active cases = InfAC = InfC - InfR - InfF
+  //   Infection showing symptoms = InfSS = InfAC - InfA - InfS
+  quM: 0, // quM: quarantine model
+  // 0: none
+  // 1: diagnosed only (severe-acute symptoms or tested positive)
+  // 2: diagnosed and direct connections
+  quD: 14, quN: 0, quT: 0,
+  // quD : quarantine days
+  // quN : now quarantined
+  // quT : total quarantined during epidemic
+  tstM: 0, // tstM: testing model
+  // 0: none
+  // 1: for diagnosis
+  // 2: random among all nodes
+  // 3: random among central nodes
+  tstMx: 5, tstAv: 500, tstRe: 0, tstW: true, tstng: false,
+  // tstMx : Maximum test kits to use in a day
+  // tstAv : Number of available test kits
+  // tstRe : Number of test kits remaining
+  // tstW : Wait for 1st severe case to start testing
+  // tstng : First severe case flag to start testing
+  resV: [], iniP: [],
+  // resV : several arrays of dayly results to plot [[infC],[infF],[infR],[quN],[infD],[InfAC = infC - infF - infR],[infS]]
+  // iniP : initial infection points for R0 measuring
+  R0q1: 0, R0: 0, R0q3: 0,
+  // R0q1 : R0 quartile 1
+  // R0 : basic reproduction number
+  // R0q3 : R0 quartile 3
+  pcd : true, tMrk : null, tMax : 1500,
+  // pcd: execution is paused in short tMax delays
+  // tMax : max milliseconds to wait to change phase
+  // tMrk : timestamp
+  dbug : false,
+  // debugging and showing messages in console
+  offMk : 0, globalO : [],
+  // offMk: offspring mark, index of current position in globalO
+  // globalO: array of offspring quantities
+  oldPntO : [], looped : true, stop : 100, NDays : 0, NCes : 0, drty : false
+  // oldPntO : Array of points highlighted moving the mouse
+  // looped : Keeps track of current loop state of program
+  // stop : Number of simulation runs before stopping
+  // NDays : Run simulation up to day n
+  // NCes : Stop simulation after nth infection cases
+  // drty : Data is dirty if user parameters are changed in the middle of execution
+};
+  
+function collapseParams(event) {
+  event.preventDefault();
+  const pardivEl = document.getElementById("paramsdiv");
+  const butEl = document.getElementById("Collapse");
+  const spanEl = butEl.parentElement.getElementsByTagName("span")[0];
+  const dumEl = document.getElementById("paramsdummy");
+  if (pardivEl.style.display === "none") {
+    dumEl.style.display = "none";
+    pardivEl.style.display = "";
+    butEl.innerHTML = "&uuarr;"
+    spanEl.innerHTML = "Collapse Param. box";
+    const inpEl = document.getElementById("maxTO");
+    inpEl.focus();
+    inpEl.select();
+  } else {
+    dumEl.style.display = "";
+    pardivEl.style.display = "none";
+    butEl.innerHTML = "&ddarr;"
+    spanEl.innerHTML = "Expand Param. box";
+  }
+}
+  
+function applyParams() {
+  const tabResEl = document.getElementById("TabResults");
+  const eles = [inpEles,selEles];
+  for (var j=0; j<eles.length; j++) {
+    for (var i=0; i<eles[j].length; i++) {
+      if (pStg[eles[j][i].id] !== "undefined") {
+        pStg[eles[j][i].id] = Number(eles[j][i].value);
+        if (eles[j][i].id === "angD") {
+          pStg[eles[j][i].id] = Number(eles[j][i].value)*v2Pi/360;
+        }
+        if (["pcd","tstW"].indexOf(eles[j][i].id) > -1 ) {
+          pStg[eles[j][i].id] = eles[j][i].checked ? true : false;
+        }
+      }
+    }
+  }
+}
+  
+function reassingParams(event, wRstrt) {
+  event.preventDefault();
+  applyParams();
+  if (wRstrt) { pStg.phase = 8; }
+  pStg.drty = pStg.drty || (!wRstrt && pStg.phase < 7.5); 
+  if (!pStg.looped) {
+    processingInstance.loop(); 
+    pStg.looped = true;
+  }
+}
+
+function closeURLBox() {
+  document.getElementById("shareurl").style.display = "none";
+}
+  
+function shareParams(event) {
+  event.preventDefault();
+  var queryString = window.location.href;
+  if (window.location.search !== "" && queryString.indexOf(window.location.search)>-1) {
+    queryString = queryString.substr(0,queryString.indexOf(window.location.search));
+  } else if (queryString.indexOf("?") > -1) {
+    queryString =queryString.substr(0,queryString.indexOf("?"));
+  }
+  var nwQ = "";
+  for (var i=0; i<inpEles.length; i++) {
+    if (inpEles[i].type === "checkbox") {
+      nwQ += inpEles[i].id + "=" + (inpEles[i].checked ? 1 : 0) + "&";
+    } else {
+      nwQ += inpEles[i].id + "=" + inpEles[i].value + "&";
+    }
+  }
+  for (var i=0; i<selEles.length; i++) {
+    nwQ += selEles[i].id + "=" + selEles[i].value + "&";
+  }
+  nwQ = nwQ.substr(0,nwQ.length-1);
+  document.getElementById("taURL").value = queryString + "?" + nwQ;
+  document.getElementById("aURL").href = queryString + "?" + nwQ;
+  document.getElementById("shareurl").style.display = "";
+  document.getElementById("taURL").focus();
+  document.getElementById("taURL").select();
+}
+  
+function getURLParams() {
+  var queryString = window.location.search;
+  if (queryString === "" || queryString.length < 2) { return; }
+  const urlParams = new URLSearchParams(queryString);
+  var apply = false;
+  for (var i=0; i<inpEles.length; i++) {
+    var pVal = urlParams.get(inpEles[i].id); 
+    if (pVal) {
+      if (inpEles[i].type === "checkbox") {
+        inpEles[i].checked = (pVal === "1");
+      } else {
+        inpEles[i].value = pVal;
+      }
+      apply = true;
+    }
+  }
+  for (var i=0; i<selEles.length; i++) {
+    var pVal = urlParams.get(selEles[i].id);
+    if (pVal) {
+      selEles[i].value = pVal;
+      apply = true;
+    }
+  }
+  if (apply) { applyParams(); }
+}
+  
+getURLParams();
+  
+// Quartile calculator, array must be sorted!
+function quartile(data, q) {
+  var pos = (data.length - 1) * q;
+  var base = Math.floor(pos);
+  var rest = pos - base;
+  if (data[base+1] !== undefined) {
+    return data[base] + rest * (data[base+1] - data[base]);
+  } else {
+    return data[base];
+  }
+}
+  
+function mean(data) {
+  return (data);
+}
+
+// Calculate and report descriptive statistics
+function reportStats() {
+  // Two arrays, rcs for results cells and resus for arrays of values
+  var rcs = [], resus = [];
+  // Collect columns for which statistics have to be calculated
+  for (var i=1; i<ths.length-1; i++) {
+    if (ths[i][3] === 1) { rcs.push(i); resus.push([]); }
+  }
+  // Collect values to calculate statistics
+  const tabHisEl = document.getElementById("Historic");
+  for (var i=0; i<pStg.stop; i++) {
+    for (var j=0; j<rcs.length; j++) {
+       resus[j].push(Number(tabHisEl.rows[i+1].cells[rcs[j]].innerHTML));
+    }
+  }
+  // Calculate statistics
+  const tabStatEl = document.getElementById("Stats");
+  for (var i=1; i<tabStatEl.rows[0].cells.length; i++) {
+    var tmpM = resus[i-1].reduce((tot,num) => tot + num, 0)/resus[i-1].length;
+    tabStatEl.rows[1].cells[i].innerHTML = Math.round(tmpM*10)/10;
+    var tmpSD = Math.sqrt(resus[i-1].reduce((tot,num) => tot + Math.pow(num-tmpM,2), 0)/(resus[i-1].length-1));
+    tabStatEl.rows[2].cells[i].innerHTML = Math.round(tmpSD*100)/100;
+    tabStatEl.rows[3].cells[i].innerHTML = Math.round(tmpSD/tmpM*100) + "%";
+  }
+  tabStatEl.style.display = "";
+}
+
+// Hide the stats table again
+function hideStats() {
+  document.getElementById("Stats").style.display = "none";
+}
+
+// Collect summary results for a new row of data in the report
+function reportHistoric() {
+  const tabHisEl = document.getElementById("Historic");
+  var rowCnt = tabHisEl.rows.length-1;
+  if (pStg.drty) { return rowCnt-1; }
+  var hRow = tabHisEl.insertRow(1);
+  hRow.insertCell(0).innerHTML = rowCnt;
+  for (var i=1; i<ths.length; i++) {
+    var tmp = eval(ths[i][2]);
+    hRow.insertCell(i).innerHTML = tmp === undefined ? "-" : tmp;
+  }
+  hRow.cells[hRow.cells.length-1].style.textAlign = "left";
+  return rowCnt;
+}
+
+function reportResults() {
+  const tabResEl = document.getElementById("TabResults");
+  const tmpRs = tabResEl.getElementsByTagName("td");
+  var pctF = 100/pStg.points.length;
+  if (pStg.infD === 0 && tmpRs["infD"].innerHTML !== "0") {
+    for (var i=0; i<tmpRs.length; i++) {
+      if (tmpRs[i].id.indexOf("~") === 0) {
+        tmpRs[i].innerHTML = tmpRs[tmpRs[i].id.substring(1)].innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<tmpRs.length; i++) {
+    if (tmpRs[i].id != "") {
+      if (pStg[tmpRs[i].id] !== undefined) {
+        tmpRs[i].innerHTML = pStg[tmpRs[i].id];
+      } else if (tmpRs[i].id.indexOf("_%") === 0) {
+        var tmp = pStg[tmpRs[i].id.replace("_%","")]*pctF;
+        tmp = tmp < 1 ? Math.round(tmp*10)/10 : Math.round(tmp);
+        tmpRs[i].innerHTML = tmp;
+      }
+    }
+  }
+  var tmp = 0;
+  tmpRs["_pLen"].innerHTML = pStg.points.length;
+  tmp = pStg.infC - pStg.infR - pStg.infF;
+  tmpRs["_infAC"].innerHTML = tmp;
+  tmpRs["_%infAC"].innerHTML = Math.round(tmp*pctF);
+  tmp = Math.max(...pStg.resV[5]);
+  tmpRs["_^infAC"].innerHTML = tmp;
+  tmp = pStg.resV[5].indexOf(tmp);
+  tmp = tmp > -1 ? pStg.resV[4][tmp] : 0;
+  tmpRs["_dayMA"].innerHTML = tmp;
+  tmp = pStg.infC-pStg.infR-pStg.infF-pStg.infA-pStg.infS;
+  tmpRs["_infSS"].innerHTML = tmp;
+  tmpRs["_%infSS"].innerHTML = Math.round(tmp*pctF);
+  tmp = Math.max(...pStg.resV[6]);
+  tmpRs["_^infS"].innerHTML = tmp;
+  tmp = pStg.resV[6].indexOf(tmp);
+  tmp = tmp > -1 ? pStg.resV[4][tmp] : 0;
+  tmpRs["_dayMS"].innerHTML = tmp;
+  if (pStg.R0q1 !== undefined && pStg.R0q3 !== undefined) {
+    tmpRs["R0"].innerHTML += " (" + pStg.R0q1 + "," + pStg.R0q3 + ")";
+  }
+  tmp = Math.max(...pStg.resV[3]);
+  tmpRs["_^quN"].innerHTML = tmp;
+  tmp = pStg.resV[3].indexOf(tmp);
+  tmp = tmp > -1 ? pStg.resV[4][tmp] : 0;
+  tmpRs["_dayMQ"].innerHTML = tmp;
+}
+
+var programCode = function(processingInstance) {
+  with (processingInstance) {
+    /* ...offsetWidth-22 & ...clientHeight-22 come from border+padding (1px+10px) setting in style
+       for [class*="col-"] it could be computed instead of hard-wired using:
+       window.getComputedStyle(canvEl.parentElement).getPropertyValue("border") */
+    size(canvEl.parentElement.offsetWidth-22,canvEl.parentElement.clientHeight-22);
+    frameRate(100);
+
+// Rearranges array placing highest values near the center
+var toMid = function(unArr) {
+    if (unArr.length < 3) { return unArr; }
+    unArr.sort(function(a,b){return b-a;}); // Sort ascending
+    var nwArr = [unArr[0]];
+    for (var i=1; i<unArr.length; i++) {
+        if (i%2 === 0) {
+            nwArr.push(unArr[i]);
+        } else {
+            nwArr.unshift(unArr[i]);
+        }
+    }
+    return nwArr;
+};
+
+// Rearranges array mixing high and low values
+var toMix = function(unArr) {
+  if (unArr.length <= 3) { return unArr; }
+  unArr.sort(function(a,b){return b-a;}); // Sort ascending
+  var nwArr = [];
+  var midInd = floor(unArr.length/2);
+  for (var i=0; i<midInd; i++) {
+    nwArr.push(unArr[i]);
+    nwArr.push(unArr[unArr.length-1-i]);
+  }
+  if (unArr.length % 2 !== 0) {
+    nwArr.push(unArr[midInd]);
+  }
+  return nwArr;
+};
+
+// Normal distribution of offspring between pStg.minO and pStg.maxO
+var dNorm = {
+  mean : (pStg.maxO-pStg.minO)/2 + pStg.minO,
+  stdev : pStg.maxO/3, // Heuristic here
+  getVal : function(num) {
+    return exp(-0.5*sq((num-this.mean)/this.stdev));
+  },
+  nvals : [],
+  init : function() {
+    this.nvals = [];
+    var tot = 0;
+    for (var i=0; i<=pStg.maxO; i++) {
+      this.nvals[i] = this.getVal(i);
+      tot += this.nvals[i];
+    }
+    for (var i=0; i<this.nvals.length-1; i++) {
+      this.nvals[i] /= tot;
+      if (i>0) { this.nvals[i] += this.nvals[i-1]; }
+    }
+    // console.log("last val -> " + this.nvals[this.nvals.length-1]); // Should be 1
+    this.nvals[this.nvals.length-1] = 1;
+  },
+  getRand : function() {
+    var tmp = random();
+    for (var i=0; i<this.nvals.length; i++) {
+      if (tmp <= this.nvals[i]) { return i; }
+    }
+  }
+}
+
+// Generate offspring
+var genOffSp = function(numO) {
+  if (numO === 0) { return false; }
+  // numO : number of parents of offspring to introduce
+  var outS = "";
+  var newO = [];
+  for (var i=0; i<numO; i++) {
+    // newO[i] = floor(random(pStg.minO,pStg.maxO)); // Integer. Old generator
+    newO[i] = dNorm.getRand(); // New generator with normal distribution
+    // Uniform distribution. Leads to greater number of nodes with 0 children too soon
+    // Maximum will be maxO although floor(random) will only reach maxO-1 because node will
+    // link to parent adding 1 to its degree
+    newO[i] = newO[i] < 0 ? 0 : newO[i]; // Positive or zero
+    newO[i] -= (pStg.runTO + newO[i] > pStg.maxTO ? pStg.runTO + newO[i] - pStg.maxTO : 0); // Cannot exceed maxTO (max total offspring)
+    pStg.runTO += newO[i];
+  }
+  newO = toMix(newO);
+  for (var i=0; i<newO.length; i++) {
+    pStg.globalO.push(newO[i]);
+    outS += (newO[i] + ", ");
+  }
+  if (pStg.dbug) { console.log(outS + " - " + pStg.runTO); }
+  return true;
+};
+
+// Generate multiple offspring
+var newGen = function() {
+  do {
+    while (pStg.globalO[pStg.offMk] !== -1) {
+        if (genOffSp(pStg.globalO[pStg.offMk++])) { pStg.globalO.push(-1); }
+    }
+    pStg.offMk++;
+  } while (pStg.offMk < pStg.globalO.length);
+  pStg.mDeg = 0;
+  pStg.numC = 0;
+  pStg.numC = pStg.globalO.reduce(function(total,num) {
+    pStg.mDeg = pStg.mDeg < num ? num : pStg.mDeg;
+    return total + (num >= pStg.degC-1 ? 1 : 0);
+  },0);
+  pStg.mDeg++;
+};
+
+// Set random color
+var setRColor = function() {
+    var rcolor = color(random(0,75),random(50,255),random(200,255));
+    fill(rcolor);
+    stroke(rcolor);
+    return rcolor;
+};
+
+// Calculate initial positions of offspring
+var setPositions = function(px,py) {
+    // Pointer a offspring ptOff. Radio rad. Cantidad puntos pts. Puntos por dibujar ptsA
+    var ptOff = 2, rad = pStg.radS, pts = pStg.globalO[0];
+    var ptsA = [{
+      x: px, y: py, // coordinates
+      nx: px, ny: py, // noisy coordinates
+      color: setRColor(), // point color
+      fCh: null, // first child
+      offSp: pts, // offspring count
+      parent: null, // parent
+      ind: 0, // position in array
+      infSt: 0, // infection state, initially healthy
+      R0: 0, // basic reproduction number  
+      daysI: 0, // days infected, for simulation
+      mkMlt: 1, // mark multiplier for visual appearence
+      daysTC: 0, // if not going to dye, days to cure
+      daysTS: 0, // days to show symptoms if not asymptomatic
+      daysTA: 0, // days to severe-acute symptoms
+      daysTD: 0, // days to die if not recovering
+      quSt: 0, // quarantine state, initially not quaratined
+      daysQ: 0, // days quarantined, for simulation
+      Nqu: 0, // number of times node has been quarantined
+      quPut: function() { // set node quarantined
+        this.quSt = 1; // quarantined state
+        this.daysQ = pStg.quD; // will be at least pStg.quD days in quarantine
+        this.Nqu++; // increase quarantine count
+      }, 
+      tstEp: false, // has not been tested for epidemiological surveillance
+      tstDg: false, // has not been tested for diagnosis
+      tstEx: false // has not been tested before exiting hospital
+    }];
+    var cuPt = ptsA[0], ptCnt=1; // Current point & point counter
+    var curCo = cuPt.color; // Current color
+    // Factor de variación del radio como giro adicional de cada posición
+    var radF = 0.6;
+    while (ptOff < pStg.globalO.length) {
+        var angOff = v2Pi/pts;
+        var nwPts = 0;
+        for (var i=0; i<pts; i++) {
+            // wNoise para agregar variación en la posición de cada punto
+            var dRad = random(-rad/5,rad/5);
+            var dAng = random(-angOff/5,angOff/5);
+            // Posición del nuevo punto con ruido (nwx, nwy)
+            var nwx = px+(rad+dRad)*cos((angOff+dAng)*i-rad*radF*v2Pi/360);
+            var nwy = py+(rad+dRad)*sin((angOff+dAng)*i-rad*radF*v2Pi/360);
+            ptsA.push({
+              x: px+rad*cos(angOff*i-rad*radF*v2Pi/360),
+              y: py+rad*sin(angOff*i-rad*radF*v2Pi/360), // coordinates
+              nx: nwx, ny: nwy, // noisy coordinates
+              color: curCo, // point color
+              fCh: null, // first child
+              offSp: pStg.globalO[ptOff], // offspring count
+              parent: cuPt, // parent
+              ind: ptCnt++, // position in array
+              infSt: 0, // infection state, initially healthy
+              R0: 0, // basic reproduction number
+              daysI: 0, // days infected, for simulation
+              mkMlt: 1, // mark multiplier for visual appearance
+              daysTC: 0, // if not going to dye, days to cure
+              daysTS: 0, // days to show symptoms if not asymptomatic
+              daysTA: 0, // days to severe-acute symptoms
+              daysTD: 0, // days to die if not recovering
+              quSt: 0, // quarantine state, initially not quaratined
+              daysQ: 0, // days quarantined, for simulation
+              Nqu: 0, // number of times node has been quarantined
+              quPut: function() { // set node quarantined
+                this.quSt = 1; // quarantined state
+                this.daysQ = pStg.quD; // will be at least pStg.quD days in quarantine
+                this.Nqu++; // increase quarantine count
+              }, 
+              tstEp: false, // has not been tested for epidemiological surveillance
+              tstDg: false, // has not been tested for diagnosis
+              tstEx: false // has not been tested before exiting hospital
+            }); 
+            if (!cuPt.fCh) { cuPt.fCh = ptsA[ptsA.length-1]; }
+            nwPts += pStg.globalO[ptOff++];
+            if (pStg.globalO[ptOff] === -1) { // Move to process offspring of next parent
+                do { cuPt = ptsA[cuPt.ind+1]; }
+                while (cuPt.offSp === 0 && cuPt.ind + 1 < ptsA.length);
+                curCo = setRColor(); ptOff++;
+            }
+        }
+        pts = nwPts;
+        rad += pStg.radS;
+    }
+    return ptsA;
+};
+  
+// Calculate the diameter of the network
+var getNDiam = function() {
+  // Because it's a tree
+  if (pStg.points.length <= 3) { return pStg.points.length - 1;}
+  var tmpD = 0;
+  var outPt = pStg.points[pStg.points.length -1];
+  var prePt;
+  while (outPt.parent) {
+    tmpD++;
+    prePt = outPt;
+    outPt = outPt.parent;
+  }
+  if (prePt.ind !== pStg.points.length) {
+    var tmpD1 = 0;
+    for (var i=pStg.points.length-2; i>0; i--) {
+      outPt = pStg.points[i];
+      while (outPt.parent) {
+        if (outPt.parent === prePt) { tmpD1 = 0; break; }
+        tmpD1++;
+        outPt = outPt.parent;
+      }
+      if (tmpD1 > 0) { tmpD += tmpD1; break; }
+    }
+  } else { // The only possibility for this is diameter = 2
+    tmpD++;
+  }
+  return tmpD;
+}
+      
+var showInfState = function(pnt,cx,cy) {
+  var nCol = color(255,255-green(pnt.color),255-blue(pnt.color));
+  fill(nCol);
+  stroke(nCol);
+  strokeWeight(2);
+  var alch = 255;
+  var tmpS;
+  switch (pnt.infSt) { // Infection states:
+    // *.5: Transitioning to another state
+    case 0: // 0: Healthy, never infected before - single point
+      break;
+    case 1: // 1: Infected, pre-symptomatic or asymptomatic - triangle under
+      tmpS = 4*pnt.mkMlt;
+      triangle(cx-tmpS,cy+tmpS/2,cx+tmpS,cy+tmpS/2,cx,cy-tmpS);
+      alch = 50;
+      break;
+    case 2: // 2: Infected symptomatic - arc over
+      noFill();
+      tmpS = 8*pnt.mkMlt;
+      arc(cx,cy,tmpS,tmpS,-170/360*v2Pi,-10/360*v2Pi);
+      break;
+    case 3: // 3: Infected severe symptomatic - arc under
+      noFill();
+      tmpS = 8*pnt.mkMlt;
+      arc(cx,cy,tmpS,tmpS,10/360*v2Pi,170/360*v2Pi);
+      break;
+    case 4: // 4: Dead - quad x
+      alch = 20;
+      tmpS = 3*pnt.mkMlt;
+      quad(cx-tmpS,cy+tmpS,cx+tmpS,cy+tmpS,cx-tmpS,cy-tmpS,cx+tmpS,cy-tmpS);
+      break;
+    case 5: // 5: Recovered, has antibodies, no virus trace, some immunity - ellipse around
+      alch = 100;
+      tmpS = 7*pnt.mkMlt;
+      ellipse(cx,cy,tmpS,tmpS);
+      break;
+  }
+  if (pnt.quSt === 1) { // Quarantined
+    noFill();
+    tmpS = 5*pnt.mkMlt;
+    rect(cx-tmpS,cy-tmpS*0.7,tmpS*2,tmpS*2);
+  }
+  if (pnt.tstDg || pnt.tstEp || pnt.tstEx) {
+    tmpS = 5*pnt.mkMlt;
+    line(cx-tmpS,cy-1,cx+tmpS,cy-1);
+    line(cx-tmpS,cy+1,cx+tmpS,cy+1);
+  }
+  if (pnt.mkMlt > 1) {
+    pnt.mkMlt *= 0.9;
+    if (pnt.mkMlt < 1) { pnt.mkMlt = 1; }
+  }
+  return alch;
+};
+      
+var drawPoint = function(pnt,wNoise,edgeP) {
+  var cx,cy,px,py;
+  if (wNoise) {
+      cx = pnt.nx;
+      cy = pnt.ny;
+      px = pnt.parent.nx;
+      py = pnt.parent.ny;
+  } else {
+      cx = pnt.x;
+      cy = pnt.y;
+      px = pnt.parent.x;
+      py = pnt.parent.y;
+  }
+  var alch = showInfState(pnt,cx,cy);
+  strokeWeight(0.5);
+  stroke(pnt.color);
+  fill(pnt.color);
+  if (edgeP === 1 || (edgeP>0 && edgeP<1 && random()<=edgeP)) {
+      line(cx,cy,px,py);
+  }
+  nCol = color(red(pnt.color),green(pnt.color),blue(pnt.color),alch);
+  fill(nCol);
+  ellipse(cx,cy,5,5);
+};
+
+// Dibujar la red generada
+var drawRed = function(wNoise,wCircles,edgeP,wLegend) {
+  if (pStg.pDrw < 1 && random() > pStg.pDrw) { return false; }
+  background(0);
+  /* Old for drawing the root point
+  strokeWeight(0.5); // Por si hay que resaltar el punto central
+  showInfState(pStg.points[0],pStg.points[0].x,pStg.points[0].y);
+  stroke(pStg.points[0].color);
+  fill(pStg.points[0].color);
+  ellipse(pStg.points[0].x,pStg.points[0].y,5,5);
+  strokeWeight(0.5);
+  */
+  if (wCircles) {
+    noFill();
+    stroke(255,255,255);
+    var numCi = 1;
+    var outPt = pStg.points[pStg.points.length -1];
+    while (outPt.parent) {
+      numCi++;
+      outPt = outPt.parent;
+    }
+    for (var i=0; i<numCi; i++) {
+      ellipse(
+          pStg.points[0].x,
+          pStg.points[0].y,
+          2*pStg.radS*(i+1),
+          2*pStg.radS*(i+1));
+    }
+  }
+  var pPar = pStg.points[0].parent;
+  pStg.points[0].parent = pStg.points[0]; // Just for the loop
+  for (var i=0; i<pStg.points.length; i++) {
+    drawPoint(pStg.points[i],wNoise,edgeP);
+  }
+  pStg.points[0].parent = pPar;
+  if (wLegend) {
+    for (var i=0; i<pStg.lpnts.length; i++) {
+      drawPoint(pStg.lpnts[i],false,0);
+      textSize(10);
+      fill(255,255,255);
+      text(pStg.lpnts[i].txt,pStg.lpnts[i].x+7,pStg.lpnts[i].y+4);
+    }
+  }
+  return true;
+};
+
+// Remove random positional noise
+var removeNoise = function() {
+  var allDone = true;
+  var minDis = 2;
+  for (var i=0; i<pStg.points.length; i++) {
+    var pnt = pStg.points[i];
+    var pDist = dist(pnt.x,pnt.y,pnt.nx,pnt.ny);
+    if (pDist <= minDis) {
+        pnt.nx = pnt.x;
+        pnt.ny = pnt.y;
+    } else {
+        allDone = false;
+        if (pDist > minDis*10) {
+            pnt.nx -= (pnt.nx-pnt.x)/10;
+            pnt.ny -= (pnt.ny-pnt.y)/10;
+        } else if (pDist > minDis) {
+            pnt.nx-=minDis*(pnt.nx-pnt.x)/pDist;
+            pnt.ny-=minDis*(pnt.ny-pnt.y)/pDist;
+        }
+    }
+  }
+  return allDone;
+};
+
+// Move node coords along circle closer to parent
+var groupNodes = function() {
+  for (var i=1; i<pStg.points.length; i++) {
+    var pnt = pStg.points[i];
+    if (pnt.offSp !== 0) {
+      var disP = dist(pnt.x,pnt.y,
+      pnt.parent.x,pnt.parent.y);
+      var angP = acos((pnt.x-pnt.parent.x)/disP)*(pnt.y>pnt.parent.y ? 1 : -1);
+      angP -= pStg.angD*(pnt.offSp-1)/2;
+      var iCh = pnt.fCh.ind;
+      disP *= 2;
+      for (var j=0; j<pnt.offSp; j++) {
+          pStg.points[iCh+j].x = pnt.parent.x + disP*cos(angP+pStg.angD*j);
+          pStg.points[iCh+j].y = pnt.parent.y + disP*sin(angP+pStg.angD*j);
+      }
+    }
+  }
+};
+
+// Redraw node with offspring and parent for select/unselect
+var redrawPnt = function(pnt) {
+    var tmp = pnt.fCh;
+    while (tmp) {
+        line(tmp.nx,tmp.ny,pnt.nx,pnt.ny);
+        ellipse(tmp.nx,tmp.ny,5,5);
+        tmp = pStg.points[tmp.ind+1];
+        if (tmp.parent !== pnt) { tmp = null; }
+    }
+    if (pnt.parent) {
+        line(pnt.nx,pnt.ny,pnt.parent.nx,pnt.parent.ny);
+        ellipse(pnt.parent.nx,pnt.parent.ny,5,5);
+    }
+    ellipse(pnt.nx,pnt.ny,5,5);
+};
+
+// Highlight node with offspring and parent
+var highlight = function(pnt, lightON) {
+    if (lightON) {
+        stroke(255,255,255);
+        strokeWeight(2);
+    } else {
+        stroke(0,0,0);
+        strokeWeight(4);
+    }
+    redrawPnt(pnt);
+    if (!lightON) {
+        strokeWeight(0.5);
+        stroke(pnt.color);
+        redrawPnt(pnt);
+    }
+};
+
+var mouseMoved = function() {
+    var pntO;
+    search:
+    for (var i=0; i<pStg.points.length; i++) {
+        if (abs(pStg.points[i].nx-mouseX) <= 5) {
+            if (abs(pStg.points[i].ny-mouseY) <= 5) {
+                pntO = pStg.points[i];
+                break search;
+            }
+        }
+    }
+    if (pntO) {
+        while (pStg.oldPntO.length > 0) {
+            var tmpO = pStg.oldPntO.pop();
+            if (tmpO !== pntO) {
+                highlight(tmpO,false);
+            }
+        }
+        pStg.oldPntO.push(pntO);
+        highlight(pntO,true);
+    }
+};
+
+var mouseClicked = function() {
+    if (pStg.looped) { noLoop(); } else { loop(); }
+    pStg.looped = !pStg.looped;
+};
+    
+var genPlot = function() {
+  var daysTP = 120; // Days to plot
+  var cw = (daysTP>width/4 ? width/2-10 : (daysTP<width/8 ? daysTP*3 : daysTP*2)), lx = width-cw-1;
+  var ch = cw/1.78, ly = 0;
+  strokeWeight(1);
+  stroke(255,255,255,100);
+  noFill();
+  rect(lx,ly,cw,ch);
+  var tSz = ch*0.07;
+  textSize(tSz);
+  fill(255,255,255);
+  text("Susceptible - Infected - Recovered: Cases", lx, ly+ch+tSz+2,);
+  var tW = textWidth("Deaths (log): ");
+  stroke(255,50,50,100);
+  strokeWeight(tSz*0.9);
+  var lW = (cw-tW)*log(pStg.infF+1)/log(pStg.points.length);
+  text("Deaths (log): " + pStg.infF, lx, ly+ch+2*tSz+4);
+  line(lx+tW,ly+ch+2*tSz+2,lx+tW+lW,ly+ch+2*tSz+2);
+  if (pStg.tstM > 0) {
+    stroke(50,50,255,100);
+    text("Test kits:      " + pStg.tstRe, lx, ly+ch+3*tSz+6);
+    lW = (cw-tW)*(pStg.tstRe/pStg.tstAv);
+    line(lx+tW,ly+ch+3*tSz+4,lx+tW+lW,ly+ch+3*tSz+4);
+  }
+  strokeWeight(1);
+  stroke(255,255,255,100);
+  noFill();
+  lx += cw*0.05;
+  ly += ch*0.9;
+  line(lx,ly,lx,ly-ch*0.8); // eje y
+  line(lx,ly,lx+cw*0.9,ly); // eje x
+  var dx = cw*0.9/daysTP; // 60 days to plot
+  var dy = pStg.points.length > 0 ? ch*0.8/pStg.points.length : 0;
+  strokeWeight(dx);
+  var bCol = setRColor();
+  bCol = (red(bCol),green(bCol),blue(bCol),100); // healthy color - base
+  var iCol = color(255-red(bCol),255-green(bCol),255-blue(bCol),100); // infection cases color
+  var rCol = color(255-red(bCol),255,blue(bCol),100); // recovered color
+  var j = pStg.resV[0].length-1;
+  for (var i=daysTP; i>0; i--) {
+    if (i <= j) {
+      // Susceptibles
+      stroke(bCol);
+      line(lx+i*dx,ly,lx+i*dx,ly-(pStg.points.length-pStg.resV[0][j])*dy);
+      // Infection cases (active or not)
+      stroke(iCol);
+      line(lx+i*dx+dx/3,ly,lx+i*dx+dx/3,ly-pStg.resV[0][j]*dy);
+      // Recovered
+      stroke(rCol);
+      line(lx+i*dx+2*dx/3,ly,lx+i*dx+2*dx/3,ly-pStg.resV[2][j]*dy);
+      // Active cases
+      stroke(255,255,255,100);
+      point(lx+i*dx+2*dx/3,ly-(pStg.resV[5][j])*dy);
+      j--;
+    }
+  }
+};
+      
+var genLegend = function() {
+  var cx = width - 140;
+  var cy = height/2;
+  var lPoints = [
+    {
+      x:cx, y:cy-38, parent: null,
+      color: setRColor(),
+      infSt: 0, mkMlt: 2, quSt: 0, tstEp: false,
+      txt: "Healthy - susceptible"
+    },{
+      x:cx, y:cy-22, parent: null,
+      color: setRColor(),
+      infSt: 1, mkMlt: 2, quSt: 0, tstEp: false,
+      txt: "Infected - a/presymptomatic"
+    },{
+      x:cx, y:cy-7, parent: null,
+      color: setRColor(),
+      infSt: 2, mkMlt: 2, quSt: 0, tstEp: false,
+      txt: "Infected - symptomatic"
+    },{
+      x:cx, y:cy+7, parent: null,
+      color: setRColor(),
+      infSt: 3, mkMlt: 2, quSt: 0, tstEp: false,
+      txt: "Infected - severe symptoms"
+    },{
+      x:cx, y:cy+22, parent: null,
+      color: setRColor(),
+      infSt: 4, mkMlt: 2, quSt: 0, tstEp: false,
+      txt: "Deceased"
+    },{
+      x:cx, y:cy+38, parent: null,
+      color: setRColor(),
+      infSt: 5, mkMlt: 2, quSt: 0, tstEp: false,
+      txt: "Recovered"
+    },{
+      x:cx, y:cy+54, parent: null,
+      color: setRColor(),
+      infSt: 0, mkMlt: 2, quSt: 1, tstEp: false,
+      txt: "Quarantined"
+    },{
+      x:cx, y:cy+70, parent: null,
+      color: setRColor(),
+      infSt: 0, mkMlt: 2, quSt: 0, tstEp: true,
+      txt: "Tested"
+    }
+  ];
+  for (var i=0; i<lPoints.length; i++) {
+    lPoints[i].parent = lPoints[i];
+  }
+  return lPoints;
+};
+
+var showPhase = function() {
+  var boxH = 13;
+  fill(0,0,0);
+  noStroke();
+  
+  var tMsg = "0" + (pStg.phase + 0.001);
+  tMsg = "Phase: " + tMsg.substr(tMsg.indexOf(".")-1,3) + " ";
+  
+  switch (pStg.phase) {
+    case 0: tMsg += "Network generation"; break;
+    case 1: tMsg += "Showing links"; break;
+    case 2: tMsg += "Concentrical distances"; break;
+    case 3: tMsg += "Moving points to distance lines"; break;
+    case 4: tMsg += "Removing concentrical lines"; break;
+    case 5: tMsg += "Reorganizing nodes"; break;
+    case 6: tMsg += "Infection begins"; break;
+    case 7: tMsg += "Epidemic"; break;
+    case 8: tMsg += "Restarting"; break;
+  }
+  
+  if (pStg.drty) { tMsg += " - dirty data"}
+  
+  var tMsg1 = "Duration (days): " + pStg.infD;
+  var pctInf = round(pStg.infC/pStg.points.length*100);
+  tMsg1 += " C:" + pStg.infC + "/" + pStg.points.length + " (" + pctInf + "%)";
+  tMsg1 += " F:" + pStg.infF + " A:" + pStg.infA + " R:" + pStg.infR + " S:" + pStg.infS;
+  //tMsg1 += " R0:" + pStg.R0 + " (" + pStg.R0q1 + "," + pStg.R0q3 + ")";
+  textSize(boxH-2);
+  rect(0,height-2*boxH,textWidth(tMsg)>textWidth(tMsg1)?textWidth(tMsg):textWidth(tMsg1),2*boxH,5);
+  fill(255,255,255);
+  text(tMsg,1,height-4-boxH);
+  text(tMsg1,1,height-4);
+};
+
+var infStats = function() {
+  var stC = 0, stF = 0, stA = 0, stSS = 0, stR = 0, stS = 0, stQ = 0, stQT = 0;
+  // Cases, Fatalities, Asymptomatics, Shows Symptoms, Recovered, Severe
+  var RArr = pStg.iniP.map(function(num) { return pStg.points[num].R0; }); // Initial infection set for R0 calculation
+  for (var i=0; i<pStg.points.length; i++) {
+    switch(pStg.points[i].infSt) {
+      case 0: break;
+      case 1: stC++; stA++; break;
+      case 2: stC++; stSS++; break;
+      case 3: stC++; stS++; break;
+      case 4: stC++; stF++; break;
+      case 5: stC++; stR++; break;
+    }
+    if (pStg.points[i].quSt === 1) { stQ++; }
+    if (pStg.points[i].Nqu > 0) { stQT++; }
+  }
+  RArr.sort(function(a,b){return a-b;}); // Sort ascending
+  pStg.R0q1 = quartile(RArr, 0.25);
+  pStg.R0 = quartile(RArr, 0.5);
+  pStg.R0q3 = quartile(RArr, 0.75);
+  pStg.infC = stC;
+  pStg.infF = stF;
+  pStg.infA = stA;
+  pStg.infR = stR;
+  pStg.infS = stS;
+  pStg.quN = stQ;
+  pStg.quT = stQT;
+  if (stSS !== stC - stF - stA - stR - stS) { 
+    console.log("C:" + stC + " F:" + stF + " A:" + stA + " R:" + stR + " S:" + stS + " SS:" + stSS);
+  }
+  pStg.resV[0].push(pStg.infC);
+  pStg.resV[1].push(pStg.infF);
+  pStg.resV[2].push(pStg.infR);
+  pStg.resV[3].push(pStg.quN);
+  pStg.resV[4].push(pStg.infD);
+  pStg.resV[5].push(pStg.infC - pStg.infF - pStg.infR); // InfAC = InfC - InfF - InfR = Active Cases
+  pStg.resV[6].push(pStg.infS);
+  reportResults();
+};
+      
+var runInfection = function() {
+  // A day in the pandemic
+  pStg.infD++;
+
+  var Prevalent = false; // To be verified in the following loop
+  
+  // Contagion process
+  var infVals = [1,2,3]; // Infected states
+  
+  // Contagion loop runs backwards (i--) from outer nodes to inner nodes
+  // Contagion can be child-to-parent or parent-to-child but only one level per loop
+  for (var i=pStg.points.length-1; i>0; i--) { // Contagion loop
+    var newInf = pStg.points[i];
+    Prevalent = Prevalent || infVals.indexOf(newInf.infSt) > -1;
+    // Check if there is a transmission path
+    if (((newInf.parent.infSt === 0 && infVals.indexOf(newInf.infSt) > -1) || // parent susce., child inf.
+         (newInf.infSt === 0 && infVals.indexOf(newInf.parent.infSt) > -1)) && // parent inf., child susce.
+         (newInf.quSt === 0 && newInf.parent.quSt === 0)) { // none quarantined
+      if (random()<=pStg.infP) { // activate this contagion path?
+        // Check if point is part of initial infection set and adds to R0 calculation
+        if (newInf.infSt === 0) { 
+          if (pStg.iniP.indexOf(newInf.parent.ind) > -1) { newInf.parent.R0++; } 
+        } else { 
+          if (pStg.iniP.indexOf(newInf.ind) > -1) { newInf.R0++; }
+          newInf = newInf.parent;
+        }
+        newInf.infSt = 0.5; // Transition to infected state 1 after loop ends
+      }
+    }
+  }
+  Prevalent = Prevalent || infVals.indexOf(pStg.points[0].infSt) > -1; // root node check
+
+  // End here if no active infections
+  if (!Prevalent) { return Prevalent; }
+  
+  // if Prevalent then a possibility for infection from unknown source
+  // could be included here as follows:
+  // 1. Check if infection from unknown source parameter enabled
+  // 2. For every healthy node check contagion probability and infect if match
+  // Contagion from unknown accounts for edges (links) that may exist
+  // but are not included in the tree network model
+  
+  // Infection evolution
+  infVals.push(0.5); // Add those transitioning
+  var tstQuDg = []; // Test queue for diagnosis (severe cases)
+  var tstQuEp = []; // Test queue for epidemiological surveillance
+  var tstQuEx = []; // Test queue for exiting hospital
+  
+  // Epidemic loop goes forward (i++) from inner to outer
+  // Decides fate of infected and executes state transition
+  for (var i=0; i<pStg.points.length; i++) { // Epidemic loop
+    var pnt = pStg.points[i];
+    if (pnt.quSt === 1) { pnt.daysQ--; }
+    if (infVals.indexOf(pnt.infSt) > -1) { // For those in any infection state
+      pnt.daysI++; // Increase infection days
+      
+      if (pnt.daysI > 2) { // Course of infection starts here
+        
+        if (pnt.infSt === 3) { // Fate of those with severe conditions
+          if (pnt.daysTC > 0) { // Will Recover
+            if (pnt.daysI > pnt.daysTS + pnt.daysTA + pnt.daysTD + pnt.daysTC) { // Has recovered
+              if (pStg.tstM > 0 && !pnt.tstEx) { // Test being applied and not tested before
+                tstQuEx.push(pnt); // Will apply tests later
+              }
+              pnt.infSt = 5; // This state change will be reverted if not enough test kits for today
+              pnt.mkMlt = 2;
+            }
+          } else { // Not sure yet
+            if (pnt.daysI >= pnt.daysTS + pnt.daysTA + pnt.daysTD) { // Die or recover
+              if (random() < pStg.deaP) { // dies
+                pnt.infSt = 4;
+                pnt.mkMlt = 2;
+                pnt.quSt = 0;
+              } else { // won't die
+                pnt.daysTC = round(random(1,pStg.daysTC));
+              }
+            }
+          }
+        }
+
+        if (pnt.infSt === 2) { // Fate of those with symptoms
+          if (pnt.daysTA > 0 && pnt.daysI >= pnt.daysTS + pnt.daysTA) { // Acute-severe, may die or recover
+            pnt.infSt = 3;
+            pStg.tstng = true;
+            pnt.mkMlt = 2;
+            if (pStg.tstM > 0) { // Needs test for diagnosis
+              tstQuDg.push(pnt); 
+            } 
+            // Check if point is to be quarantined
+            if (pStg.quM >= 1 && pnt.quSt < 1) { // quarantine node
+              pnt.quPut();
+              if (pStg.quM >= 2) { // quarantine direct connections
+                // parent
+                if (pnt.ind>0 && pnt.parent.quSt === 0 && pnt.parent.infSt < 3) {
+                  pnt.parent.quPut();
+                }
+                // offspring
+                for (var j=0; j<pnt.offSp; j++) {
+                  var cpnt = pStg.points[pnt.fCh.ind+j];
+                  if (cpnt.quSt === 0 && cpnt.infSt < 3) { // mark for quarantine
+                    cpnt.quSt = 0.5;
+                  }
+                }
+              }
+            }
+          } else if (pnt.daysTC > 0 && pnt.daysI > pnt.daysTS + pnt.daysTC) { // Has recovered
+            pnt.infSt = 5;
+            pnt.mkMlt = 2;
+          }
+        }
+
+        if (pnt.infSt === 1) { // Fate of those asymptomatic or pre-symptomatic
+          if (pnt.daysTS > 0 && pnt.daysI >= pnt.daysTS) { // Symptomatic
+            pnt.infSt = 2;
+            pnt.mkMlt = 2;
+          } else if (pnt.daysTC > 0 && pnt.daysI >= pnt.daysTC) { // Cured
+            pnt.infSt = 5;
+            pnt.mkMlt = 2;
+          }                  
+        }
+        
+      } // Infection course ends here
+      
+      if (pnt.infSt === 1 && pnt.daysI === 2) { // Course of infection is decided on day 2
+        if (random() < pStg.aSymP) { // Asymptomatic
+          pnt.daysTC = round(random(pStg.daysTS,pStg.daysTC)); // Days to cure
+        } else { // Not asymptomatic
+          pnt.daysTS = random(2,pStg.daysTS); // Days to transition to symptomatic
+          if (random() < pStg.sevP) { // Severe symptoms
+            pnt.daysTA = round(random(1,pStg.daysTA)); // Days to transition to severe-acute
+            pnt.daysTD = round(random(1,pStg.daysTD)); // Days to define if dies or recovers
+          } else { // Will recover
+            pnt.daysTC = round(random(pStg.daysTS,pStg.daysTC)); // Days to cure
+          }
+        }
+      }
+      
+      if (pnt.infSt === 0.5) { // Do transition
+        pnt.infSt = 1;
+        pnt.mkMlt = 2;
+      }
+      if (pnt.quSt === 0.5) { // Put in quarantine
+        pnt.quPut();
+      }
+      
+    } // End of process for those in infection states
+    
+    if (pnt.quSt === 1 && pnt.daysQ <= 0) { // Check if out of quarantine
+      if (pnt.infSt === 3) { // If severe symptoms restart quarantine
+        pnt.daysQ = pStg.quD;
+      } else { // All other states go out of quarantine
+        pnt.quSt = 0;
+        pnt.daysQ = 0;
+      }
+    }
+    
+    if (pStg.tstM > 1 && pStg.tstng && pnt.infSt < 3) { // Test process if model beyond diagnosis and not severe, dead or recovered
+      if (pStg.tstM === 2) { // Test random among all nodes except those recovered, dead or severe
+        var prob = pStg.tstMx/pStg.points.length;
+        if (random() <= prob) { // Add to test queue for epidemiological surveillance
+          tstQuEp.push(pnt);
+        }
+      } else if (pStg.tstM === 3 && pnt.offSp + 1 >= pStg.degC) { // Test random among central nodes
+        var prob = pStg.tstMx/pStg.numC;
+        if (random() <= prob) { // Add to test queue for epidemiological surveillance
+          tstQuEp.push(pnt);
+        }
+      }
+    }
+    
+  } // End of epidemic loop
+  
+  // Process test queues
+  var tstKits = (pStg.tstRe > pStg.tstMx ? (pStg.tstMx > 0 ? pStg.tstMx : pStg.tstRe) : pStg.tstRe);
+  var tstCnt = 0;
+  var pnt;
+  if (pStg.tstM >= 1 && tstQuDg.length + tstQuEx.length > 0) { // Diagnosis + hospital exit test
+    for (var i=0; i<tstQuDg.length; i++) {
+      if (tstKits > tstCnt) {
+        pnt = tstQuDg[i];
+        pnt.tstDg = true;
+        pnt.mkMlt = 2;
+        tstCnt++;
+      } else { break; }
+    }
+    for (var i=0; i<tstQuEx.length; i++) {
+      pnt = tstQuEx[i];
+      if (tstKits > tstCnt) {
+        pnt.tstEx = true;
+        pnt.mkMlt = 2;
+        tstCnt++;
+      } else if ( pStg.tstRe > tstCnt ) {
+        // Patients left in queue will have to wait another day
+        // but only if there are test kits in stock
+        pnt.infSt = 3;
+      }
+    }
+  }
+  if (pStg.tstM > 1 && tstQuEp.length > 0) {
+    for (var i=0; i<tstQuEp.length; i++) {
+      pnt = tstQuEp[i];
+      if (tstKits > tstCnt) {
+        pnt.tstEp = true;
+        pnt.mkMlt = 2;
+        tstCnt++;
+        if (pnt.infSt === 1 || pnt.infSt === 2) {
+          pnt.quPut();
+        }
+      } else { break; }
+    }
+  }
+  pStg.tstRe -= tstCnt;
+  
+  return Prevalent;
+};
+      
+var startInfection = function() {
+  // Reset infection days
+  pStg.infD = 0;
+  // All test kits available
+  pStg.tstRe = pStg.tstAv;
+  pStg.tstng = !pStg.tstW;
+  // Infect nodes according to model
+  var seekCount = 0;
+  // seekCount used to limit seek loops to pStg.points.length
+  var iNodes = [];
+  while (iNodes.length < pStg.infN) {
+    // Seek non infected and not previously infected
+    var tmp = -1;
+    var randomCount = 0;
+    // randomCount used to limit random selection of infection points
+    do {
+      // if (pStg.points.length < 50) { console.log("busy here"); }
+      tmp = floor(random(0,pStg.points.length));
+      if (++randomCount > pStg.points.length * 0.75) { break; }
+    } while (pStg.points[tmp].infSt !== 0);
+    if (iNodes.indexOf(tmp) === -1) { // has not been selected this round
+      // Infection mode
+      // 0: aleatory, n nodes at random start pandemic
+      // 1: centralized, n nodes at network center start pandemic
+      // 2: central, n highly connected nodes start pandemic
+      if (pStg.infM === 1) { // Must be a node near the center
+        if (tmp !== 0 && pStg.points[tmp].parent !== pStg.points[0] &&
+           pStg.points[tmp].parent.parent !== pStg.points[0]) {
+          tmp = -1;
+        }
+      } else if (pStg.infM === 2) { // Must be node with high degree
+        if (pStg.points[tmp].offSp+1 < pStg.degC) {
+          tmp = -1;
+        }
+      }
+      if (tmp > -1) {
+        iNodes.push(tmp);
+        pStg.points[tmp].infSt = 1; // got infected
+        pStg.points[tmp].daysI = -1; // from previous days
+        pStg.points[tmp].mkMlt = 2; // mark big
+      }
+    }
+    if (++seekCount > pStg.points.length) { break; }
+  }
+  // Save iNodes for R0 calculation
+  pStg.iniP = iNodes;
+  // Reset result values for plotting
+  pStg.resV = [[iNodes.length],[0],[0],[0],[0],[0],[0]];
+};
+
+var draw = function() {
+  switch(pStg.phase) {
+  case 0: // Network generation & first display
+    pStg.globalO.push(pStg.iniO);
+    pStg.globalO.push(-1); // End of offspring mark
+    pStg.offMk = 2; // Offspring numbers start at positon 2 of globalO
+    pStg.runTO = pStg.iniO+1;
+    dNorm.init(); // Initiate normal distribution generator
+    genOffSp(pStg.iniO); // First generation
+    pStg.globalO.push(-1); // End of offspring mark
+    newGen(); // The rest of generations
+    pStg.points = setPositions(width/2-130,height/2); // Generate screen points
+    pStg.drty = pStg.points.length < pStg.maxTO;
+    pStg.diam = getNDiam(); // Once points are known diamater can be calculated
+    drawRed(true,false,0,false); // wNoise, wCircles, edgeP, wLegend
+    pStg.offMk = 0; // Let next phase control advance
+    pStg.oldPntO = []; // Recently selected point list
+    pStg.phase += 0.5;
+    pStg.tMrk = millis() - (pStg.pcd ? 0 : pStg.tMax);
+    break;
+  case 1: // Show links between people
+    var lnkP = (pStg.pcd ? 25 : 5);
+    if (pStg.offMk < lnkP) {
+      drawRed(true,false,pStg.offMk++/lnkP,false); // wNoise, wCircles, edgeP, wLegend
+    } else {
+      drawRed(true,false,1,false);
+      pStg.oldPntO = [];
+      pStg.phase += 0.5;
+      pStg.tMrk = millis() - pStg.tMax*(pStg.pcd ? 0.25 : 1);
+    }
+    break;
+  case 2: // Show concentrical circles
+    drawRed(true,true,1,false); // wNoise, wCircles, edgeP, wLegend
+    pStg.oldPntO = [];
+    pStg.phase += 0.5;
+    pStg.tMrk = millis() - pStg.tMax*(pStg.pcd ? 0.25 : 1);
+    break;
+  case 3: // Move points to equidistant circle
+    if (removeNoise()) {
+      drawRed(false,true,1,false); // wNoise, wCircles, edgeP, wLegend
+      pStg.oldPntO = [];
+      pStg.phase += 0.5;
+      pStg.tMrk = millis() - pStg.tMax*(pStg.pcd ? 0.25 : 1);
+    } else { drawRed(true,true,1,false); }
+    break;
+  case 4: // Remove circle lines
+    drawRed(false,false,1,false); // wNoise, wCircles, edgeP, wLegend
+    pStg.oldPntO = [];
+    pStg.phase += 0.5;
+    groupNodes();
+    pStg.tMrk = millis() - pStg.tMax*(pStg.pcd ? 0.25 : 1);
+    break;
+  case 5: // Take nodes to final position
+    if (removeNoise()) {
+      drawRed(false,false,1,false); // wNoise, wCircles, edgeP, wLegend
+      pStg.offMk = 0; // Let next phase control advance
+      pStg.oldPntO = [];
+      pStg.phase += 0.5;
+      pStg.tMrk = millis() - pStg.tMax*(pStg.pcd ? 0.25 : 1);
+    } else { drawRed(true,false,1,false); }
+    break;
+  case 6: // Infection begins
+    // Infection states:
+    // 0: Healthy, never infected before - single point
+    // *.5: Transitioning to another state
+    // 1: Infected, pre-symptomatic or asymptomatic - triangle under
+    // 2: Infected symptomatic - arc over
+    // 3: Infected severe symptomatic - arc under
+    // 4: Dead - quad x
+    // 5: Recovered, has antibodies, no virus trace, some immunity - ellipse around
+    // Quarantine states:
+    // 0: no quarantine
+    // *.5: transitioning
+    // 1: in quarantine
+    if (pStg.offMk === 0) {
+      pStg.offMk++;
+      startInfection();
+      pStg.lpnts = genLegend();
+    } else if (pStg.offMk < 10) {
+      drawRed(false,false,1,true); // wNoise, wCircles, edgeP, wLegend
+      pStg.offMk++;
+    } else {
+      drawRed(false,false,1,true); // wNoise, wCircles, edgeP, wLegend
+      pStg.offMk = 0;
+      pStg.oldPntO = [];
+      pStg.phase += 0.5;
+      pStg.tMrk = millis() - pStg.tMax*(pStg.pcd ? 0.25 : 1);
+      frameRate(pStg.FPS);
+    }
+    break;
+  case 7: // Infecting running
+    infStats();
+    if (runInfection() &&
+        (pStg.NDays === 0 || pStg.infD < pStg.NDays) &&
+        (pStg.NCes === 0 || pStg.infC < pStg.NCes)) {
+      // Infection prevalent and haven't reached number of days to run
+      // and number of cases lower than pStg.NCes
+      if (drawRed(false,false,1,true)) { // wNoise, wCircles, edgeP, wLegend
+        genPlot();
+      }
+    } else if (pStg.offMk < 10) {
+      if (pStg.offMk === 0) {
+        var runs = reportHistoric();
+        if (runs > 0 && runs % pStg.stop === 0) {
+          pStg.looped = false;
+          noLoop();
+          reportStats();
+        }
+      }
+      if (drawRed(false,false,1,true)) { // wNoise, wCircles, edgeP, wLegend
+        genPlot();
+      }
+      pStg.offMk++;
+    } else {
+      pStg.oldPntO = [];
+      pStg.phase += 0.5;
+      pStg.tMrk = millis() - pStg.tMax*(pStg.pcd ? -2 : 0.75);
+    }
+    break;
+  case 8: // Restart
+    frameRate(100);
+    hideStats();
+    pStg.oldPntO = [];
+    pStg.phase = 0;
+    pStg.globalO = [];
+    pStg.drty = false;
+    pStg.offMk = 0; // Let next phase control advance
+  }
+  showPhase();
+  if (pStg.phase % 1 === 0.5 && millis() - pStg.tMrk >= pStg.tMax) {
+    pStg.phase = floor(pStg.phase + 1);
+  }
+};
+
+if (pStg.dbug) { 
+    console.log(pStg.globalO);
+    console.log(pStg.globalO.reduce(function(total,num) { return total + (num>0 ? num : 0); }));
+}
+        
+    }};
+
+  // Get the canvas that ProcessingJS will use
+  var canvas = document.getElementById("simulationcanvas"); 
+  // Pass the function to ProcessingJS constructor
+  var processingInstance = new Processing(canvas, programCode); 
+  </script>
+</html>
