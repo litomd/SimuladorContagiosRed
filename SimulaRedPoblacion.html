@@ -1005,12 +1005,23 @@ var setPositions = function(px,py) {
     }
     return ptsA;
 };
+
+// Calculate distance to center from a node
+var getPDist = function(fromP) {
+  var outPt = fromP, numCi = 0;
+  while (outPt.parent) {
+    numCi++;
+    outPt = outPt.parent;
+  }
+  return numCi;
+}
   
 // Calculate the diameter of the network
 var getNDiam = function() {
   // Because it's a tree
   if (pStg.points.length <= 3) { return pStg.points.length - 1;}
   var tmpD = 0;
+  // Start from the outer most node
   var outPt = pStg.points[pStg.points.length -1];
   var prePt;
   while (outPt.parent) {
@@ -1018,23 +1029,26 @@ var getNDiam = function() {
     prePt = outPt;
     outPt = outPt.parent;
   }
-  if (prePt.ind !== pStg.points.length) {
+  // Find another node that reaches root from a different branch
+  if (prePt.ind !== pStg.points.length - 1) { // The "- 1" was not present as of Jun.16
     var tmpD1 = 0;
-    for (var i=pStg.points.length-2; i>0; i--) {
+    for (var i=pStg.points.length-2; i>0; i--) { // Don't start in the same place
       outPt = pStg.points[i];
+      // Find a node that doesn't connect to prePt
       while (outPt.parent) {
         if (outPt.parent === prePt) { tmpD1 = 0; break; }
         tmpD1++;
         outPt = outPt.parent;
       }
-      if (tmpD1 > 0) { tmpD += tmpD1; break; }
+      // tmpD1 > 0 means a different branch was found
+      if (tmpD1 > 0) { tmpD += tmpD1; break; } // Add 2nd path to final diameter
     }
   } else { // The only possibility for this is diameter = 2
     tmpD++;
   }
   return tmpD;
 }
-      
+
 var showInfState = function(pnt,cx,cy) {
   var nCol = color(255,255-green(pnt.color),255-blue(pnt.color));
   fill(nCol);
@@ -1129,12 +1143,7 @@ var drawRed = function(wNoise,wCircles,edgeP,wLegend) {
   if (wCircles) {
     noFill();
     stroke(255,255,255);
-    var numCi = 1;
-    var outPt = pStg.points[pStg.points.length -1];
-    while (outPt.parent) {
-      numCi++;
-      outPt = outPt.parent;
-    }
+    var numCi = getPDist(pStg.points[pStg.points.length -1]);
     for (var i=0; i<numCi; i++) {
       ellipse(
           pStg.points[0].x,
@@ -1687,13 +1696,17 @@ var startInfection = function() {
     if (iNodes.indexOf(tmp) === -1) { // has not been selected this round
       // Infection mode
       // 0: aleatory, n nodes at random start pandemic
-      // 1: centralized, n nodes at network center start pandemic
+      // 1: centralized, n nodes at network center start pandemic.
+      //    center is 3 nodes from root or 15% of diameter
       // 2: central, n highly connected nodes start pandemic
       if (pStg.infM === 1) { // Must be a node near the center
-        if (tmp !== 0 && pStg.points[tmp].parent !== pStg.points[0] &&
-           pStg.points[tmp].parent.parent !== pStg.points[0]) {
+        var tmpDi = getPDist(pStg.points[tmp]);
+//        if (tmp !== 0 && pStg.points[tmp].parent !== pStg.points[0] &&
+//           pStg.points[tmp].parent.parent !== pStg.points[0]) {
+        if (tmpDi > 2 && tmpDi > 0.15*pStg.diam) {
           tmp = -1;
         }
+//        if (tmp > -1 ) { console.log(0.15*pStg.diam + " - " + tmpDi + " - " + tmp); }
       } else if (pStg.infM === 2) { // Must be node with high degree
         if (pStg.points[tmp].offSp+1 < pStg.degC) {
           tmp = -1;
