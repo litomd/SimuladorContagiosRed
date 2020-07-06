@@ -326,10 +326,12 @@
         <option value="2">Random among all nodes & diagnosis</option>
         <option value="3">Random among central nodes & diagnosis</option>
       </select>
-      <label for="tstMx">Test: per day <b>&swarr; &searr;</b> available</label><br>
+      <label for="tstMx">Test: max per day <b>&swarr; &searr;</b> available</label><br>
       <input type="number" class="halfL" id="tstMx" value="5">
       <input type="number" class="halfR" id="tstAv" value="500">
-      <br><input type="checkbox" id="tstW" checked><label for="tstW">Wait 1st Sev. case</label>
+      <label for="tstGP">Goal Posit. <b>&swarr; &searr;</b> Wait</label><br>
+      <input type="number" class="halfL" id="tstGP" value="0.2">
+      <input type="checkbox" id="tstW" checked><label for="pcd">1st case</label><br>
       <!-- label for=""></label><input type="number" id="" value="" -->
     </div>
   </div>
@@ -365,6 +367,7 @@
         <tr><td>Infected</td><td id="infC">0</td><td id="_%infC">0</td><td>-</td><td>-</td><td></td><td id="~infC">-</td><td id="~_%infC">-</td></tr>
         <tr><td>Active</td><td id="_infAC">0</td><td id="_%infAC">0</td><td id="_^infAC">0</td><td id="_dayMA">0</td><td></td><td id="~_^infAC">-</td><td id="~_dayMA">-</td></tr>
         <tr><td>Tests</td><td id="tstRe">0</td><td id="_%tstRe">0</td><td id="tstAv">0</td><td>1</td><td></td><td>-</td><td>-</td></tr>
+        <tr><td>Positivity</td><td id="_tstOP">0</td><td id="_tstP">0</td><td>-</td><td>-</td><td></td><td id="~_tstOP">-</td><td>-</td></tr>
         <tr><td>Quarantined</td><td id="quN">0</td><td id="_%quN">0</td><td id="_^quN">-</td><td id="_dayMQ">0</td><td></td><td id="~_^quN">-</td><td id="~_dayMQ">-</td></tr>
         <tr><td>Recovered</td><td id="infR">0</td><td id="_%infR">0</td><td>-</td><td>-</td><td></td><td id="~infR">-</td><td id="~_%infR">-</td></tr>
         <tr><td>Fatalities</td><td id="infF">0</td><td id="_%infF">0</td><td>-</td><td>-</td><td></td><td id="~infF">-</td><td id="~_%infF">-</td></tr>
@@ -410,6 +413,8 @@
     ["TstM","Testing model: 0-None, 1-For diagnosis only, 2-Random among all nodes, 3-Random among central nodes","pStg.tstM",0],
     ["TstAv","Test kits available","pStg.tstAv",0],
     ["TstMx","Maximum number of test kits for a day","pStg.tstMx",0],
+    ["TstGP","Positivity goal for testing","pStg.tstGP",0],
+    ["TstOP","Testing positivity observed during simulation","Math.round(pStg.tstOP*10)/10",1],
     ["TstW","Wait for first severe case to start testing","pStg.tstW ? 1 : 0",0],
     ["TstRe","Test kits remaining","pStg.tstRe",1],
     ["InfD","Days since start of infection","pStg.infD",1],
@@ -478,101 +483,161 @@ const selEles = document.getElementsByTagName("select");
 const v2Pi = 2*Math.acos(-1); // Equivalent to 2*pi
         
 var pStg = { // Global variables, parameters storage
-  phase : 0, // Program phase:
+  /* Control parameters */
+  // Program phase control:
   // 0: generate population
   // 1: show links
   // 2: show concentric levels
   // 3: show distances as concentric level
   // 4: remove concentric circles
   // 5: build tree-like network
-  points : null, lpnts : null, diam : 0,
+  // 6: infection start
+  // 7: infection running
+  // 8: restart
+  phase : 0, 
   // points: array of points in screen
   // each point is an individual element of analysis
+  points : null,
   // lpoints: points for explicative legend
+  lpnts : null,
   // diam: network diameter
-  minO : -5, maxO : 7, iniO : 6, runTO : 0, maxTO : 2500,
+  diam : 0,
+  /* Input parameters */
+  // minO : minimun offspring can be negative to shift media, actual negatives become zero
+  minO : -5,
   // maxO : maximun new offspring for each parent
-  // minO : minimun offspring can be negative to shift media,
-  //        actual negatives become zero
+  maxO : 7,
   // iniO : offspring of base node (initial)
+  iniO : 6,
   // runTO : running total of global offspring
+  runTO : 0,
   // maxTO : maximun number of global offspring
-  radS : 20, angD : 10*v2Pi/360, FPS : 100, pDrw : 0.25,
+  maxTO : 2500,
   // radS : size of radio for spacing points
+  radS : 20,
   // angD : angular distance between offspring in final network    
+  angD : 10*v2Pi/360,
   // FPS : Frames per second for infection phase
+  FPS : 100,
   // pDrw : Percentage of times screen is redrawn
-  degC : 3, numC : 0, mDeg : 0,
+  pDrw : 0.25,
   // degC: degree of node to be labeled "central"
+  degC : 3, 
   // numC: number of nodes with degree >= degC
+  numC : 0,
   // mDeg: maximum degree observed in a node
-  infP : 0.15, aSymP : 0.75, sevP : 0.2, deaP : 0.8,
+  mDeg : 0,
   // infP : probability of infection transmission on interaction
+  infP : 0.15,
   // aSymP : probability of being asymptomatic if infected (conditional)
+  aSymP : 0.75,
   // sevP : probability of severe symptoms if infected (conditional)
+  sevP : 0.2,
   // deaP : probability of dying if symptoms are severe (conditional)
-  daysTC : 35, daysTS : 14, daysTA : 5, daysTD : 10,
+  deaP : 0.8,
   // daysTC : max days to cure
+  daysTC : 35,
   // daysTS : max days to show symptoms after infection
+  daysTS : 14,
   // daysTA : max days to severe-acute symptoms after showing symptoms
+  daysTA : 5,
   // daysTD : max days to die or recover after severe-acute symptoms show
-  infM: 0, // infM: infection mode for initial cases
+  daysTD : 10,
+  // infM: infection mode for initial cases
   // 0: aleatory, n nodes at random start pandemic
   // 1: centralized, n nodes at network center start pandemic
   // 2: central, n highly connected nodes start pandemic
-  infN: 5, infD: 0, infC: 0, infF: 0, infR: 0, infA: 0, infS: 0,
+  infM: 0, 
   // infN : number of cases at the beginning of pandemic
+  infN: 5,
+  /* Output parameters */
   // infD : infection days
+  infD: 0,
   // infC : infection cases
+  infC: 0,
   // infF : infection fatalities
+  infF: 0,
   // infR : infection recoveries
+  infR: 0,
   // infA : infection asymptomatic cases
+  infA: 0,
   // infS : infection severe cases
+  infS: 0,
   // Calculated stats :
   //   Infection active cases = InfAC = InfC - InfR - InfF
   //   Infection showing symptoms = InfSS = InfAC - InfA - InfS
-  quM: 0, // quM: quarantine model
+  
+  // quM: quarantine model
   // 0: none
   // 1: diagnosed only (severe-acute symptoms or tested positive)
   // 2: diagnosed and direct connections
-  quD: 14, quN: 0, quT: 0,
+  quM: 0, 
   // quD : quarantine days
+  quD: 14,
   // quN : now quarantined
+  quN: 0,
   // quT : total quarantined during epidemic
-  tstM: 0, // tstM: testing model
+  quT: 0,
+  // tstM: testing model
   // 0: none
   // 1: for diagnosis
   // 2: random among all nodes
-  // 3: random among central nodes
-  tstMx: 5, tstAv: 500, tstRe: 0, tstW: true, tstng: false,
-  // tstMx : Maximum test kits to use in a day
+  // 3 : random among central nodes
+  tstM: 0, 
+  // tstMx: Maximum test kits to use in a day
+  tstMx: 5,
   // tstAv : Number of available test kits
+  tstAv: 500,
   // tstRe : Number of test kits remaining
+  tstRe: 0,
+  // tstPo : Test kits counted for positivity calculation (excludes exit ticket tests)
+  tstPo: 0,
+  // tstP : Testing positivity, percentage of test coming up positive for a single day
+  tstP: 0,
+  // tstG : Testing goal, number of test to do as a result of last day's positivity
+  tstG: 0,
+  // tstGP : Testing goal positivity, goal positivity percentage to seek obtain in the day
+  tstGP: 0.2,
+  // tstOP : Positivity observed in testing during the simulation
+  tstOP: 0,
   // tstW : Wait for 1st severe case to start testing
+  tstW: true,
   // tstng : First severe case flag to start testing
-  resV: [], iniP: [],
+  tstng: false,
   // resV : several arrays of dayly results to plot [[infC],[infF],[infR],[quN],[infD],[InfAC = infC - infF - infR],[infS]]
+  resV: [], 
   // iniP : initial infection points for R0 measuring
-  R0q1: 0, R0: 0, R0q3: 0,
+  iniP: [],
   // R0q1 : R0 quartile 1
+  R0q1: 0,
   // R0 : basic reproduction number
+  R0: 0,
   // R0q3 : R0 quartile 3
-  pcd : true, tMrk : null, tMax : 1500,
+  R0q3: 0,
   // pcd: execution is paused in short tMax delays
-  // tMax : max milliseconds to wait to change phase
+  pcd : true,
   // tMrk : timestamp
-  dbug : false,
+  tMrk : null,
+  // tMax : max milliseconds to wait to change phase
+  tMax : 1500,
   // debugging and showing messages in console
-  offMk : 0, globalO : [],
+  dbug : false,
   // offMk: offspring mark, index of current position in globalO
+  offMk : 0,
   // globalO: array of offspring quantities
-  oldPntO : [], looped : true, stop : 100, NDays : 0, NCes : 0, drty : false
+  globalO : [],
   // oldPntO : Array of points highlighted moving the mouse
+  oldPntO : [],
   // looped : Keeps track of current loop state of program
+  looped : true,
   // stop : Number of simulation runs before stopping
+  stop : 100,
   // NDays : Run simulation up to day n
+  NDays : 0,
   // NCes : Stop simulation after nth infection cases
+  NCes : 0,
   // drty : Data is dirty if user parameters are changed in the middle of execution
+  drty : false
 };
   
 function collapseParams(event) {
@@ -629,7 +694,7 @@ function reassingParams(event, wRstrt) {
 function closeURLBox() {
   document.getElementById("shareurl").style.display = "none";
 }
-  
+
 function shareParams(event) {
   event.preventDefault();
   var queryString = window.location.href;
@@ -752,6 +817,7 @@ function reportResults() {
   const tabResEl = document.getElementById("TabResults");
   const tmpRs = tabResEl.getElementsByTagName("td");
   var pctF = 100/pStg.points.length;
+  // If first report then move current values to historic columns
   if (pStg.infD === 0 && tmpRs["infD"].innerHTML !== "0") {
     for (var i=0; i<tmpRs.length; i++) {
       if (tmpRs[i].id.indexOf("~") === 0) {
@@ -759,6 +825,7 @@ function reportResults() {
       }
     }
   }
+  // Current values
   for (var i=0; i<tmpRs.length; i++) {
     if (tmpRs[i].id != "") {
       if (pStg[tmpRs[i].id] !== undefined) {
@@ -796,6 +863,8 @@ function reportResults() {
   tmp = pStg.resV[3].indexOf(tmp);
   tmp = tmp > -1 ? pStg.resV[4][tmp] : 0;
   tmpRs["_dayMQ"].innerHTML = tmp;
+  tmpRs["_tstOP"].innerHTML = Math.round(pStg.tstOP*10)/10;
+  tmpRs["_tstP"].innerHTML = Math.round(pStg.tstP*10)/10;
 }
 
 var programCode = function(processingInstance) {
@@ -1629,19 +1698,30 @@ var runInfection = function() {
     
   } // End of epidemic loop
   
-  // Process test queues
+  // Process test queues & Respond to positivity goal if set
+  // Define the number of test kits to use for the day
   var tstKits = (pStg.tstRe > pStg.tstMx ? (pStg.tstMx > 0 ? pStg.tstMx : pStg.tstRe) : pStg.tstRe);
+  // Accumulator for number of test kits used
   var tstCnt = 0;
+  // Accumulator without tests for letting out recovered patients, used for positivity calculation
+  var tstPCnt = 0;
+  // Accumulator for positive cases
+  var tstPos = 0;
+  // The point being tested
   var pnt;
   if (pStg.tstM >= 1 && tstQuDg.length + tstQuEx.length > 0) { // Diagnosis + hospital exit test
+    // Diagnosis goes first
     for (var i=0; i<tstQuDg.length; i++) {
       if (tstKits > tstCnt) {
         pnt = tstQuDg[i];
         pnt.tstDg = true;
         pnt.mkMlt = 2;
         tstCnt++;
+        if (pnt.infSt === 1 || pnt.infSt === 2) { tstPos++; } // Accumulate for positivity calculation
       } else { break; }
     }
+    tstPCnt = tstCnt;
+    // Then exit tickets. Exit tickets don't count for positivity
     for (var i=0; i<tstQuEx.length; i++) {
       pnt = tstQuEx[i];
       if (tstKits > tstCnt) {
@@ -1655,19 +1735,33 @@ var runInfection = function() {
       }
     }
   }
+  // Epidemiological survey if set to happen
   if (pStg.tstM > 1 && tstQuEp.length > 0) {
     for (var i=0; i<tstQuEp.length; i++) {
       pnt = tstQuEp[i];
-      if (tstKits > tstCnt) {
+      if (tstKits > tstCnt && tstPCnt < pStg.tstG) {
         pnt.tstEp = true;
         pnt.mkMlt = 2;
         tstCnt++;
+        tstPCnt++;
         if (pnt.infSt === 1 || pnt.infSt === 2) {
-          pnt.quPut();
+          tstPos++; // Accumulate for positivity calculation
+          pnt.quPut(); // Test results positive, patient quarantined
         }
       } else { break; }
     }
   }
+  // Preparation for next day run
+  pStg.tstP = 0; // Day positivity initialized
+  if (tstPCnt > 0) { // There was positives to count today
+    pStg.tstP = tstPos/tstPCnt;
+    // Accrued observed positivity update
+    pStg.tstOP = (pStg.tstOP * pStg.tstPo + tstPos) / (pStg.tstPo + tstPCnt);
+    pStg.tstPo += tstPCnt;
+  }
+  // New testing goal increases or decreases according to results in the day
+  pStg.tstG = (1 - (pStg.tstGP - pStg.tstP)) * pStg.tstG;
+  pStg.tstG = pStg.tstG === 0 ? tstPCnt : pStg.tstG;
   pStg.tstRe -= tstCnt;
   
   return Prevalent;
@@ -1678,7 +1772,13 @@ var startInfection = function() {
   pStg.infD = 0;
   // All test kits available
   pStg.tstRe = pStg.tstAv;
+  pStg.tstPo = 0;
   pStg.tstng = !pStg.tstW;
+  // Testing goals reset
+  // Goal is 50% of maximum tests per day or 1% of total test kits available
+  pStg.tstG = round(pStg.tstMx > 0 ? pStg.tstMx/2 : pStg.tstAv*0.01);
+  pStg.tstP = 0;
+  pStg.tstOP = 0;
   // Infect nodes according to model
   var seekCount = 0;
   // seekCount used to limit seek loops to pStg.points.length
