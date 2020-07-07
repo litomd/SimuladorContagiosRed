@@ -367,7 +367,7 @@
         <tr><td>Infected</td><td id="infC">0</td><td id="_%infC">0</td><td>-</td><td>-</td><td></td><td id="~infC">-</td><td id="~_%infC">-</td></tr>
         <tr><td>Active</td><td id="_infAC">0</td><td id="_%infAC">0</td><td id="_^infAC">0</td><td id="_dayMA">0</td><td></td><td id="~_^infAC">-</td><td id="~_dayMA">-</td></tr>
         <tr><td>Tests</td><td id="tstRe">0</td><td id="_%tstRe">0</td><td id="tstAv">0</td><td>1</td><td></td><td>-</td><td>-</td></tr>
-        <tr><td>Positivity</td><td id="_tstOP">0</td><td id="_tstP">0</td><td>-</td><td>-</td><td></td><td id="~_tstOP">-</td><td>-</td></tr>
+        <tr><td>Positivity</td><td id="_tstOP">0</td><td id="_%tstOP">0</td><td>-</td><td>-</td><td></td><td id="~_tstOP">-</td><td id="~_%tstOP">-</td></tr>
         <tr><td>Quarantined</td><td id="quN">0</td><td id="_%quN">0</td><td id="_^quN">-</td><td id="_dayMQ">0</td><td></td><td id="~_^quN">-</td><td id="~_dayMQ">-</td></tr>
         <tr><td>Recovered</td><td id="infR">0</td><td id="_%infR">0</td><td>-</td><td>-</td><td></td><td id="~infR">-</td><td id="~_%infR">-</td></tr>
         <tr><td>Fatalities</td><td id="infF">0</td><td id="_%infF">0</td><td>-</td><td>-</td><td></td><td id="~infF">-</td><td id="~_%infF">-</td></tr>
@@ -414,7 +414,7 @@
     ["TstAv","Test kits available","pStg.tstAv",0],
     ["TstMx","Maximum number of test kits for a day","pStg.tstMx",0],
     ["TstGP","Positivity goal for testing","pStg.tstGP",0],
-    ["TstOP","Testing positivity observed during simulation","Math.round(pStg.tstOP*10)/10",1],
+    ["TstOP","Testing positivity observed during simulation","Math.round(pStg.tstOP*100)/100",1],
     ["TstW","Wait for first severe case to start testing","pStg.tstW ? 1 : 0",0],
     ["TstRe","Test kits remaining","pStg.tstRe",1],
     ["InfD","Days since start of infection","pStg.infD",1],
@@ -785,7 +785,7 @@ function reportStats() {
   const tabStatEl = document.getElementById("Stats");
   for (var i=1; i<tabStatEl.rows[0].cells.length; i++) {
     var tmpM = resus[i-1].reduce((tot,num) => tot + num, 0)/resus[i-1].length;
-    tabStatEl.rows[1].cells[i].innerHTML = Math.round(tmpM*10)/10;
+    tabStatEl.rows[1].cells[i].innerHTML = tmpM < 1 ? Math.round(tmpM*100)/100 : Math.round(tmpM*10)/10;
     var tmpSD = Math.sqrt(resus[i-1].reduce((tot,num) => tot + Math.pow(num-tmpM,2), 0)/(resus[i-1].length-1));
     tabStatEl.rows[2].cells[i].innerHTML = Math.round(tmpSD*100)/100;
     tabStatEl.rows[3].cells[i].innerHTML = Math.round(tmpSD/tmpM*100) + "%";
@@ -863,8 +863,8 @@ function reportResults() {
   tmp = pStg.resV[3].indexOf(tmp);
   tmp = tmp > -1 ? pStg.resV[4][tmp] : 0;
   tmpRs["_dayMQ"].innerHTML = tmp;
-  tmpRs["_tstOP"].innerHTML = Math.round(pStg.tstOP*10)/10;
-  tmpRs["_tstP"].innerHTML = Math.round(pStg.tstP*10)/10;
+  tmpRs["_tstOP"].innerHTML = Math.round(pStg.tstOP*100)/100;
+  tmpRs["_%tstOP"].innerHTML = Math.round(pStg.tstOP*100);
 }
 
 var programCode = function(processingInstance) {
