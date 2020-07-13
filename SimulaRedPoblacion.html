@@ -188,7 +188,7 @@
     font-weight: normal;
   }
   
-  input[type=number], select {
+  input[type=number], input[type=text], select {
     width: 100%;
     padding: 2px;
     margin: 0px 1px 1px 1px;
@@ -200,17 +200,23 @@
     box-sizing: border-box;
     background-color: dimgray;
     color: azure;
-    text-align: right;
   }
   
   select {
+    text-align: right;
   }
   
-  input[type=number] {
+  input[type=text] {
+    text-align: Left;
     font-weight: bold;
   }
   
-  input[type=number]:focus, select:focus {
+  input[type=number] {
+    text-align: right;
+    font-weight: bold;
+  }
+  
+  input[type=number]:focus, input[type=text]:focus, select:focus {
     background-color: black;
   }
   
@@ -235,7 +241,7 @@
     margin: 0;
   }
   
-  input[type=number] {
+  input[type=number], input[type=text] {
     -moz-appearance: textfield;
   }
   
@@ -267,11 +273,12 @@
 <body>
 <div class="row" style="height: 100%">
   <div class="col-4 col-s-5">
-  <h1>Network contagion simulation</h1>
+  <h1 id="simNh1">Network contagion simulation</h1>
   <form>
   <div class="row subrow" id="paramsdiv">
     <div class="params">
-      <p></p>
+      <labe for="simN">Simulation name:</labe><input type="text" id="simN" value="Network contagion simulation"><br>
+      <p class="sep"></p>
       <label class="lblR" for="maxTO">Nodes</label><input type="number" class="halfR" id="maxTO" value="2500">
       <label for="minO">Min. <b>&swarr; &searr;</b> Max. offspring</label><br>
       <input type="number" class="halfL" id="minO" value="-5">
@@ -479,6 +486,7 @@
 <!-- Include the processing.js library -->
 <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
 <script>
+const oTitle = document.title;
 const canvEl = document.getElementById("simulationcanvas");
 const inpEles = document.getElementsByTagName("input");
 const selEles = document.getElementsByTagName("select");
@@ -510,6 +518,8 @@ var pStg = { // Global variables, parameters storage
   // diam: network diameter
   diam : 0,
   /* Input parameters */
+  // simN : Simulation name, set it if you want to identify the simulation
+  simN : "Test simulation",
   // minO : minimun offspring can be negative to shift media, actual negatives become zero
   minO : -5,
   // maxO : maximun new offspring for each parent
@@ -658,7 +668,7 @@ function collapseParams(event) {
     pardivEl.style.display = "";
     butEl.innerHTML = "&uuarr;"
     spanEl.innerHTML = "Collapse Param. box";
-    const inpEl = document.getElementById("maxTO");
+    const inpEl = document.getElementById("simN");
     inpEl.focus();
     inpEl.select();
   } else {
@@ -685,8 +695,11 @@ function applyParams() {
       }
     }
   }
+  document.getElementById("simNh1").innerHTML = inpEles["simN"].value;
+  document.title = inpEles["simN"].value + " " + oTitle;
 }
-  
+
+// Runs when user clicks any of Apply buttons
 function reassingParams(event, wRstrt) {
   event.preventDefault();
   applyParams();
@@ -711,9 +724,12 @@ function shareParams(event) {
     queryString =queryString.substr(0,queryString.indexOf("?"));
   }
   var nwQ = "";
+  var nwTQ = "";
   for (var i=0; i<inpEles.length; i++) {
     if (inpEles[i].type === "checkbox") {
       nwQ += inpEles[i].id + "=" + (inpEles[i].checked ? 1 : 0) + "&";
+    } else if (inpEles[i].type === "text") {
+      nwTQ += inpEles[i].id + "=" + inpEles[i].value.replace(" ","%20") + "&";
     } else {
       nwQ += inpEles[i].id + "=" + inpEles[i].value + "&";
     }
@@ -721,6 +737,7 @@ function shareParams(event) {
   for (var i=0; i<selEles.length; i++) {
     nwQ += selEles[i].id + "=" + selEles[i].value + "&";
   }
+  nwQ += nwTQ;
   nwQ = nwQ.substr(0,nwQ.length-1);
   document.getElementById("taURL").value = queryString + "?" + nwQ;
   document.getElementById("aURL").href = queryString + "?" + nwQ;
