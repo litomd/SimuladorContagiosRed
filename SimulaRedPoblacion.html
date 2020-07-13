@@ -807,8 +807,9 @@ function reportStats() {
     " "+pStg.simS[3]+":"+("0"+pStg.simS[4]).substr(-2)+":"+("0"+pStg.simS[5]).substr(-2) + "</b> to <b>" +
     pStg.simS[6]+"/"+pStg.simS[7]+"/"+pStg.simS[8] +
     " "+pStg.simS[9]+":"+("0"+pStg.simS[10]).substr(-2)+":"+("0"+pStg.simS[11]).substr(-2) + "</b> " +
-    (tmpdh>0 ? tmpdh + "h " : "") + (tmpdm>0 || tmpdh>0 ? tmpdm + "m " : "") + tmpds + "s";
+    "elapsed: " + (tmpdh>0 ? tmpdh + "h " : "") + (tmpdm>0 || tmpdh>0 ? tmpdm + "m " : "") + tmpds + "s";
   tabStatEl.style.display = "";
+  pStg.simS = -1;
 }
 
 // Hide the stats table again
