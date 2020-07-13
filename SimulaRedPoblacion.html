@@ -428,6 +428,7 @@
     ["R0","Median of R0 observed","pStg.R0",1],
     ["R0q1","First quartile of R0 observed","pStg.R0q1",1],
     ["R0q3","Third quartile of R0 observed","pStg.R0q3",1],
+    ["Time","Time in seconds running this instance","Math.round(pStg.insRT/1000)",1],
     // ["Drty","Data dirty if any parameter changed during execution","pStg.drty ? 1 : 0"], // Not useful
     ["OffSp","List of offspring number for each node starting at root","pStg.globalO.toString()",1]
   ];
@@ -440,17 +441,19 @@
       <tr><th>Statistic</th>
       <script>
         function statTblTxt() {
-          var resu = "", tmpSt = "";
+          var resu = "", tmpSt = "", tmpCols = 0;
           for (var i=1; i<ths.length-1; i++) {
             if (ths[i][3]===1) {
               resu += "<th abbr='" + ths[i][1] + "' class='out'>" + ths[i][0] + "</th>";
               tmpSt += "<td>-</td>";
+              tmpCols++;
             }
           }
           resu += "</tr>" + 
             "<tr><th>Mean</th>"+tmpSt + "</tr>" +
             "<tr><th>St.Dev.</th>"+tmpSt + "</tr>" +
-            "<tr><th>Coe.Va.</th>"+tmpSt + "</tr>";
+            "<tr><th>Coe.Va.</th>"+tmpSt + "</tr>" +
+            "<tr><th>Time</th><td colspan='" + tmpCols + "'>-</td>";
           return resu;
         }
         document.write(statTblTxt());
@@ -494,7 +497,11 @@ var pStg = { // Global variables, parameters storage
   // 6: infection start
   // 7: infection running
   // 8: restart
-  phase : 0, 
+  phase : 0,
+  // simS : Simulation start time, negative if not started yet
+  simS : -1,
+  // insRT : Instance run time in seconds
+  insRT : 0,
   // points: array of points in screen
   // each point is an individual element of analysis
   points : null,
@@ -790,6 +797,17 @@ function reportStats() {
     tabStatEl.rows[2].cells[i].innerHTML = Math.round(tmpSD*100)/100;
     tabStatEl.rows[3].cells[i].innerHTML = Math.round(tmpSD/tmpM*100) + "%";
   }
+  var tmpd1 = new Date(pStg.simS[0],pStg.simS[1],pStg.simS[2],pStg.simS[3],pStg.simS[4],pStg.simS[5]);
+  var tmpd2 = new Date(pStg.simS[6],pStg.simS[7],pStg.simS[8],pStg.simS[9],pStg.simS[10],pStg.simS[11]);
+  var tmpd = Math.floor((tmpd2-tmpd1)/1000);
+  var tmpdh = Math.floor(tmpd/3600);
+  var tmpdm = tmpd - tmpdh*3600; tmpdm = Math.floor(tmpdm/60);
+  var tmpds = tmpd - tmpdh*3600 - tmpdm*60;
+  tabStatEl.rows[4].cells[1].innerHTML = "<b>" + pStg.simS[0]+"/"+pStg.simS[1]+"/"+pStg.simS[2] +
+    " "+pStg.simS[3]+":"+("0"+pStg.simS[4]).substr(-2)+":"+("0"+pStg.simS[5]).substr(-2) + "</b> to <b>" +
+    pStg.simS[6]+"/"+pStg.simS[7]+"/"+pStg.simS[8] +
+    " "+pStg.simS[9]+":"+("0"+pStg.simS[10]).substr(-2)+":"+("0"+pStg.simS[11]).substr(-2) + "</b> " +
+    (tmpdh>0 ? tmpdh + "h " : "") + (tmpdm>0 || tmpdh>0 ? tmpdm + "m " : "") + tmpds + "s";
   tabStatEl.style.display = "";
 }
 
@@ -1492,12 +1510,12 @@ var infStats = function() {
   var RArr = pStg.iniP.map(function(num) { return pStg.points[num].R0; }); // Initial infection set for R0 calculation
   for (var i=0; i<pStg.points.length; i++) {
     switch(pStg.points[i].infSt) {
-      case 0: break;
-      case 1: stC++; stA++; break;
-      case 2: stC++; stSS++; break;
-      case 3: stC++; stS++; break;
-      case 4: stC++; stF++; break;
-      case 5: stC++; stR++; break;
+      case 0: break; // Susceptible node
+      case 1: stC++; stA++; break; // Infected node, asymptomatic
+      case 2: stC++; stSS++; break; // Infected node, showing symptoms
+      case 3: stC++; stS++; break; // Infected node, severe case
+      case 4: stC++; stF++; break; // Infected then deceased
+      case 5: stC++; stR++; break; // Infected then recovered
     }
     if (pStg.points[i].quSt === 1) { stQ++; }
     if (pStg.points[i].Nqu > 0) { stQT++; }
@@ -1747,6 +1765,7 @@ var runInfection = function() {
         if (pnt.infSt === 1 || pnt.infSt === 2) {
           tstPos++; // Accumulate for positivity calculation
           pnt.quPut(); // Test results positive, patient quarantined
+          // Quarantine relatives?
         }
       } else { break; }
     }
@@ -1830,6 +1849,9 @@ var startInfection = function() {
 var draw = function() {
   switch(pStg.phase) {
   case 0: // Network generation & first display
+    // Mark starting time and reset time count
+    if (pStg.simS === -1) { pStg.simS = [year(),month(),day(),hour(),minute(),second()]; }
+    pStg.insRT = millis();
     pStg.globalO.push(pStg.iniO);
     pStg.globalO.push(-1); // End of offspring mark
     pStg.offMk = 2; // Offspring numbers start at positon 2 of globalO
@@ -1929,10 +1951,12 @@ var draw = function() {
       }
     } else if (pStg.offMk < 10) {
       if (pStg.offMk === 0) {
+        pStg.insRT = millis() - pStg.insRT;
         var runs = reportHistoric();
         if (runs > 0 && runs % pStg.stop === 0) {
           pStg.looped = false;
           noLoop();
+          pStg.simS = pStg.simS.concat([year(),month(),day(),hour(),minute(),second()]);
           reportStats();
         }
       }
