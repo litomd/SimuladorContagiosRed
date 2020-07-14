@@ -277,7 +277,7 @@
   <form>
   <div class="row subrow" id="paramsdiv">
     <div class="params">
-      <labe for="simN">Simulation name:</labe><input type="text" id="simN" value="Network contagion simulation"><br>
+      <label for="simN">Simulation name:</label><input type="text" id="simN" value="Network contagion simulation"><br>
       <p class="sep"></p>
       <label class="lblR" for="maxTO">Nodes</label><input type="number" class="halfR" id="maxTO" value="2500">
       <label for="minO">Min. <b>&swarr; &searr;</b> Max. offspring</label><br>
@@ -689,6 +689,9 @@ function applyParams() {
         if (eles[j][i].id === "angD") {
           pStg[eles[j][i].id] = Number(eles[j][i].value)*v2Pi/360;
         }
+        if (eles[j][i].type === "text") {
+          pStg[eles[j][i].id] = eles[j][i].value;
+        }
         if (["pcd","tstW"].indexOf(eles[j][i].id) > -1 ) {
           pStg[eles[j][i].id] = eles[j][i].checked ? true : false;
         }
@@ -824,7 +827,8 @@ function reportStats() {
     " "+pStg.simS[3]+":"+("0"+pStg.simS[4]).substr(-2)+":"+("0"+pStg.simS[5]).substr(-2) + "</b> to <b>" +
     pStg.simS[6]+"/"+pStg.simS[7]+"/"+pStg.simS[8] +
     " "+pStg.simS[9]+":"+("0"+pStg.simS[10]).substr(-2)+":"+("0"+pStg.simS[11]).substr(-2) + "</b> " +
-    "elapsed: " + (tmpdh>0 ? tmpdh + "h " : "") + (tmpdm>0 || tmpdh>0 ? tmpdm + "m " : "") + tmpds + "s";
+    "elapsed: " + (tmpdh>0 ? tmpdh + "h " : "") + (tmpdm>0 || tmpdh>0 ? tmpdm + "m " : "") + tmpds + "s" +
+    " for: " + pStg.simN;
   tabStatEl.style.display = "";
   pStg.simS = -1;
 }
